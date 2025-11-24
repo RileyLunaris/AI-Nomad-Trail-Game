@@ -1,136 +1,41 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>The 2025 AI Nomad Trail</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
-    <style>
-        body { font-family: 'Inter', sans-serif; background-color: #f7f7f9; }
-        .progress-bar { transition: width 0.5s ease-in-out; }
-        .stat-bar { height: 1.5rem; border-radius: 0.5rem; overflow: hidden; }
-        .stat-fill { transition: width 0.5s; }
-        #game-area { min-height: 80vh; }
-    </style>
-</head>
-<body>
-    <script>
-        // --- Game Configuration & Constants ---
-        const START_CITY = "New York City, NY";
-        const END_CITY = "San Francisco, CA";
-        const TOTAL_DISTANCE = 3000;
-        const STARTING_CASH = 3000;
-        const STARTING_LAPTOP_HEALTH = 100;
-        const STARTING_MENTAL_HEALTH = 100;
-
-        // Global variables provided by the environment
-        const apiKey = "AIzaSyBvoJ14fof3kPl2GSZG84DtrBFwZf-wc2c"; // <--- NEW RESTRICTED KEY IS HERE
-        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
-
-        // --- Player Class (JavaScript equivalent) ---
-        class Player {
-            constructor(profession) {
-                this.profession = profession;
-                this.distance = 0;
-                this.cash = STARTING_CASH;
-                this.laptop_health = STARTING_LAPTOP_HEALTH;
-                this.mental_health = STARTING_MENTAL_HEALTH;
-                // this.covid_exposure_level = 0; <--- REMOVED
-                this.is_alive = true;
-                this.game_over_reason = "";
-            }
-
-            // Clamps values between min and max (0 and 100 for health/exposure)
-            clamp(value, min, max) {
-                return Math.max(min, Math.min(max, value));
-            }
-
-            applyEffect(cash, laptop, mental, covid, outcomeText) {
-                this.cash += cash;
-                
-                this.laptop_health = this.clamp(this.laptop_health + laptop, 0, 100);
-                this.mental_health = this.clamp(this.mental_health + mental, 0, 100);
-                // this.covid_exposure_level = this.clamp(this.covid_exposure_level + covid, 0, 100); <--- COVID REMOVED
-                
-                // UPDATED logMessage to remove COVID
-                this.logMessage(`Outcome: ${outcomeText} (Cash: $${cash}, Laptop: ${laptop}%, Mental: ${mental}%)`, 'text-blue-600'); 
-                
-                this.checkGameOver();
-            }
+function selectProfession(profession) {
+            player = new Player(profession);
+            isProcessing = false;
             
-            checkGameOver() {
-                if (this.cash <= 0) {
-                    this.game_over_reason = "You ran out of cash and couldn't pay for vital services or travel.";
-                    this.is_alive = false;
-                }
-                if (this.laptop_health <= 0) {
-                    this.game_over_reason = "Your main source of income (laptop) failed completely.";
-                    this.is_alive = false;
-                }
-                if (this.mental_health <= 0) {
-                    this.game_over_reason = "You experienced total digital burnout and quit the journey.";
-                    this.is_alive = false;
-                }
-                return !this.is_alive;
-            }
-// ... (rest of the Player class remains the same)
+            // Render the main game UI
+            document.getElementById('game-area').innerHTML = `
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 p-4 md:p-8">
+                    
+                                        <div class="lg:col-span-1 space-y-6">
+                                                <div class="bg-white p-6 rounded-xl shadow-lg">
+                            <div id="status-info" class="pb-3 border-b border-gray-200"></div>
+                            
+                            <h3 class="text-lg font-bold mt-4 mb-3 text-gray-700">Resources</h3>
+                            <div class="space-y-3">
+                                <div class="flex justify-between items-center">
+                                    <span class="font-semibold text-gray-700">Cash:</span>
+                                    <span id="cash-value" class="text-2xl font-extrabold text-green-600">$3,000.00</span>
+                                </div>
+                                <div class="h-2 bg-gray-200 rounded-full">
+                                    <div id="progress-fill" class="progress-bar h-full bg-indigo-500 rounded-full" style="width: 0%;"></div>
+                                </div>
+                                <div class="text-sm text-gray-500 text-right" id="distance-value">0 / 3000 miles</div>
+                            </div>
+                            
+                            <h3 class="text-lg font-bold mt-6 mb-3 text-gray-700">Health & Gear</h3>
+                            <div class="space-y-4">
+                                                                <div>
+                                    <div id="laptop-label" class="text-sm font-medium text-gray-700">Laptop Health: 100%</div>
+                                    <div class="stat-bar bg-gray-200"><div id="laptop-fill" class="stat-fill bg-green-500 h-full" style="width: 100%;"></div></div>
+                                </div>
+                                                                <div>
+                                    <div id="mental-label" class="text-sm font-medium text-gray-700">Mental Health: 100%</div>
+                                    <div class="stat-bar bg-gray-200"><div id="mental-fill" class="stat-fill bg-yellow-500 h-full" style="width: 100%;"></div></div>
+                                </div>
+                            </div>
+                        </div>
 
-// ... (UI Update Functions - The `covid` loop element has been removed)
-        function updateUI() {
-            if (!player) return;
-
-            document.getElementById('cash-value').textContent = `$${player.cash.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",")}`;
-            
-            // Update stat bars and values
-            const stats = [
-                { id: 'laptop', value: player.laptop_health, color: 'bg-green-500', label: 'Laptop Health' },
-                { id: 'mental', value: player.mental_health, color: 'bg-yellow-500', label: 'Mental Health' }
-            ];
-// ... (rest of updateUI remains the same)
-// ... (End Game functions remain the same)
-
-// ... (AI API Integration & Scenario Generation)
-        async function generateAIScenario() {
-            player.logMessage("Requesting new, unique scenario from AI...", 'text-yellow-600');
-            isProcessing = true;
-            updateUI(); // Disable UI controls
-
-            document.getElementById('scenario-display').innerHTML = `
-                <div class="text-center p-6 bg-yellow-100 rounded-lg shadow-md">
-                    <h2 class="text-2xl font-bold text-yellow-700">Generating Scenario...</h2>
-                    <p class="text-gray-600 mt-2">The AI is creating a dynamic challenge tailored to your journey.</p>
-                </div>
-            `;
-
-            // --- AI SYSTEM PROMPT UPDATED HERE ---
-            const systemPrompt = `You are the Game Master for a game called "The 2025 Digital Nomad Trail". Your task is to generate a unique, unpredictable, and highly specific scenario tailored to a remote worker traveling across the US. The scenario MUST be relevant to CURRENT EVENTS or timeless digital nomad challenges: tech failure, gig economy paywalls, political instability, unexpected travel costs, or mental health burnout. You MUST return the output as a valid JSON object following the provided schema, including exactly two distinct choices (A and B) with realistic consequences. Do not add any text or explanation outside the JSON.`;
-            
-            // --- USER QUERY UPDATED HERE ---
-            const userQuery = `Generate a new event scenario for a player who is currently a ${player.profession}. The event should involve a choice between two actions, each with clear impacts on Cash, Laptop Health (1-100), and Mental Health (1-100). Keep the effects moderate (e.g., changes between -100 and +100 for cash, and -30 to +15 for health).`;
-
-            // --- SCENARIO SCHEMA UPDATED HERE ---
-            const scenarioSchema = {
-                type: "OBJECT",
-                properties: {
-                    title: { type: "STRING", description: "A catchy, short title for the event, e.g., 'Server Meltdown' or 'Unexpected Checkpoint'." },
-                    description: { type: "STRING", description: "A detailed description of the event unfolding, setting the scene." },
-                    choices: {
-                        type: "ARRAY",
-                        description: "Exactly two distinct choices the player can make, A and B.",
-                        items: {
-                            type: "OBJECT",
-                            properties: {
-                                option: { type: "STRING", description: "The text for the player's choice (e.g., 'Pay for premium repairs' or 'Attempt DIY fix')." },
-                                effect_cash: { type: "INTEGER", description: "Change to player cash. Positive is gain, negative is loss. Range: -200 to 200." },
-                                effect_laptop: { type: "INTEGER", description: "Change to laptop health (1-100). Positive is gain, negative is loss. Range: -30 to 15." },
-                                effect_mental: { type: "INTEGER", description: "Change to mental health (1-100). Positive is gain, negative is loss. Range: -20 to 10." },
-                                outcome_text: { type: "STRING", description: "A brief, narrative consequence of making this choice." }
-                            },
-                            required: ["option", "effect_cash", "effect_laptop", "effect_mental", "outcome_text"] 
-                        }
-                    }
-                },
-                required: ["title", "description", "choices"]
-            };
-// ... (rest of the code remains the same)
+                                                <div class="bg-gray-50 p-6 rounded-xl shadow-inner max-h-96 overflow-y-auto">
+                            <h3 class="text-lg font-bold mb-3 text-gray-700">Journey Log</h3>
+                            <div id="log-area" class="text-sm">
+                                <p class
