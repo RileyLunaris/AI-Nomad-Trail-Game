@@ -34,8 +34,24 @@ function selectProfession(profession) {
                                 </div>
                             </div>
                         </div>
-
-                                                <div class="bg-gray-50 p-6 rounded-xl shadow-inner max-h-96 overflow-y-auto">
+                                                                        <div class="bg-gray-50 p-6 rounded-xl shadow-inner max-h-96 overflow-y-auto">
                             <h3 class="text-lg font-bold mb-3 text-gray-700">Journey Log</h3>
                             <div id="log-area" class="text-sm">
-                                <p class
+                                <p class="text-gray-500">Welcome, ${player.profession}! Your journey begins.</p>
+                            </div>
+                        </div>
+                    </div>                                         <div class="lg:col-span-2 space-y-6">
+                        <div id="scenario-display" class="min-h-[150px] flex items-center justify-center">
+                            <div class="text-center text-gray-500 p-6 bg-white rounded-xl shadow-md">
+                                <span class="text-xl font-medium">Ready to travel?</span>
+                            </div>
+                        </div>
+
+                        <div id="action-controls">
+                            <button id="continue-btn" onclick="continueJourney()" class="w-full p-4 bg-green-600 hover:bg-green-700 text-white font-bold rounded-xl shadow-lg transition duration-150">
+                                Press to Start Journey
+                            </button>
+                        </div>
+                    </div>                 </div>             `;
+            updateUI();
+        }
