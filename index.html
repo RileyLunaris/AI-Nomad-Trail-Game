@@ -20,7 +20,7 @@
 
     <script>
 // ----------------------------------------------------------------------
-// START OF ALL GAME JAVASCRIPT LOGIC (The code you provided)
+// START OF ALL GAME JAVASCRIPT LOGIC
 // ----------------------------------------------------------------------
 
 // --- Game Configuration & Constants ---
@@ -47,7 +47,6 @@ class Player {
         this.game_over_reason = "";
     }
 
-    // Clamps values between min and max (0 and 100)
     clamp(value, min, max) {
         return Math.max(min, Math.min(max, value));
     }
@@ -285,7 +284,7 @@ function handleChoice(choiceIndex, choices) {
         choice.effect_cash, 
         choice.effect_laptop, 
         choice.effect_mental, 
-        0,
+        0, 
         choice.outcome_text
     );
 
