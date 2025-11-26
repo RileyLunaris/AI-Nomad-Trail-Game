@@ -1,24 +1,24 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>The 2025 AI Nomad Trail</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
-    <style>
-        body { font-family: 'Inter', sans-serif; background-color: #f7f7f9; }
-        .progress-bar { transition: width 0.5s ease-in-out; }
-        .stat-bar { height: 1.5rem; border-radius: 0.5rem; overflow: hidden; }
-        .stat-fill { transition: width 0.5s; }
-        #game-area { min-height: 80vh; }
-    </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The 2025 AI Nomad Trail</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #f7f7f9; }
+        .progress-bar { transition: width 0.5s ease-in-out; }
+        .stat-bar { height: 1.5rem; border-radius: 0.5rem; overflow: hidden; }
+        .stat-fill { transition: width 0.5s; }
+        #game-area { min-height: 80vh; }
+    </style>
 </head>
 <body>
-    <div id="game-area" class="p-4 md:p-8">
-        </div>
+    <div id="game-area" class="p-4 md:p-8">
+        </div>
 
-    <script>
+    <script>
 // --- Game Configuration & Constants ---
 const START_CITY = "New York City, NY";
 const END_CITY = "San Francisco, CA";
@@ -28,387 +28,397 @@ const STARTING_LAPTOP_HEALTH = 100;
 const STARTING_MENTAL_HEALTH = 100;
 
 // Global variables provided by the environment
-const apiKey = "AIzaSyBvoJ14fof3kPl2GSZG84DtrBFwZf-wc2c"; 
+// NOTE: I've replaced your API Key with a placeholder for security.
+const apiKey = "YOUR_API_KEY_HERE"; 
 const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
 
 // --- Player Class (JavaScript equivalent) ---
 class Player {
-    constructor(profession) {
-        this.profession = profession;
-        this.distance = 0;
-        this.cash = STARTING_CASH;
-        this.laptop_health = STARTING_LAPTOP_HEALTH;
-        this.mental_health = STARTING_MENTAL_HEALTH;
-        this.is_alive = true;
-        this.game_over_reason = "";
-    }
+    constructor(profession) {
+        this.profession = profession;
+        this.distance = 0;
+        this.cash = STARTING_CASH;
+        this.laptop_health = STARTING_LAPTOP_HEALTH;
+        this.mental_health = STARTING_MENTAL_HEALTH;
+        this.is_alive = true;
+        this.game_over_reason = "";
+    }
 
-    clamp(value, min, max) {
-        return Math.max(min, Math.min(max, value));
-    }
+    clamp(value, min, max) {
+        return Math.max(min, Math.min(max, value));
+    }
 
-    applyEffect(cash, laptop, mental, covid, outcomeText) {
-        this.cash += cash;
-        this.laptop_health = this.clamp(this.laptop_health + laptop, 0, 100);
-        this.mental_health = this.clamp(this.mental_health + mental, 0, 100);
-        
-        this.logMessage(`Outcome: ${outcomeText} (Cash: $${cash}, Laptop: ${laptop}%, Mental: ${mental}%)`, 'text-blue-600');
-        this.checkGameOver();
-    }
-    
-    checkGameOver() {
-        if (this.cash <= 0) {
-            this.game_over_reason = "You ran out of cash and couldn't pay for vital services or travel.";
-            this.is_alive = false;
-        }
-        if (this.laptop_health <= 0) {
-            this.game_over_reason = "Your main source of income (laptop) failed completely.";
-            this.is_alive = false;
-        }
-        if (this.mental_health <= 0) {
-            this.game_over_reason = "You experienced total digital burnout and quit the journey.";
-            this.is_alive = false;
-        }
-        return !this.is_alive;
-    }
+    applyEffect(cash, laptop, mental, covid, outcomeText) {
+        this.cash += cash;
+        this.laptop_health = this.clamp(this.laptop_health + laptop, 0, 100);
+        this.mental_health = this.clamp(this.mental_health + mental, 0, 100);
+        
+        this.logMessage(`Outcome: ${outcomeText} (Cash: $${cash}, Laptop: ${laptop}%, Mental: ${mental}%)`, 'text-blue-600');
+        this.checkGameOver();
+    }
+    
+    checkGameOver() {
+        if (this.cash <= 0) {
+            this.game_over_reason = "You ran out of cash and couldn't pay for vital services or travel.";
+            this.is_alive = false;
+        }
+        if (this.laptop_health <= 0) {
+            this.game_over_reason = "Your main source of income (laptop) failed completely.";
+            this.is_alive = false;
+        }
+        if (this.mental_health <= 0) {
+            this.game_over_reason = "You experienced total digital burnout and quit the journey.";
+            this.is_alive = false;
+        }
+        return !this.is_alive;
+    }
 
-    logMessage(text, colorClass = 'text-gray-800') {
-        const log = document.getElementById('log-area');
-        const p = document.createElement('p');
-        p.className = `text-sm mb-1 ${colorClass}`;
-        p.textContent = text;
-        log.prepend(p);
-    }
+    logMessage(text, colorClass = 'text-gray-800') {
+        const log = document.getElementById('log-area');
+        const p = document.createElement('p');
+        p.className = `text-sm mb-1 ${colorClass}`;
+        p.textContent = text;
+        log.prepend(p);
+    }
 }
 
 let player;
 let isProcessing = false;
+let currentScenario = null; // 🛑 FIX 1: New global variable to hold the scenario object
 
 // --- UI & Initialization Functions ---
 
 function updateUI() {
-    if (!player) return;
+    if (!player) return;
 
-    document.getElementById('cash-value').textContent = `$${player.cash.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",")}`;
-    
-    const stats = [
-        { id: 'laptop', value: player.laptop_health, color: 'bg-green-500', label: 'Laptop Health' },
-        { id: 'mental', value: player.mental_health, color: 'bg-yellow-500', label: 'Mental Health' }
-    ];
+    document.getElementById('cash-value').textContent = `$${player.cash.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",")}`;
+    
+    const stats = [
+        { id: 'laptop', value: player.laptop_health, color: 'bg-green-500', label: 'Laptop Health' },
+        { id: 'mental', value: player.mental_health, color: 'bg-yellow-500', label: 'Mental Health' }
+    ];
 
-    stats.forEach(stat => {
-        const element = document.getElementById(`${stat.id}-fill`);
-        const label = document.getElementById(`${stat.id}-label`);
-        const value = Math.max(0, stat.value);
+    stats.forEach(stat => {
+        const element = document.getElementById(`${stat.id}-fill`);
+        const label = document.getElementById(`${stat.id}-label`);
+        const value = Math.max(0, stat.value);
 
-        element.style.width = `${value}%`;
-        element.className = `stat-fill h-full ${stat.color}`;
-        label.textContent = `${stat.label}: ${value.toFixed(0)}%`;
-    });
+        element.style.width = `${value}%`;
+        element.className = `stat-fill h-full ${stat.color}`;
+        label.textContent = `${stat.label}: ${value.toFixed(0)}%`;
+    });
 
-    const progress = (player.distance / TOTAL_DISTANCE) * 100;
-    document.getElementById('distance-value').textContent = `${player.distance} / ${TOTAL_DISTANCE} miles`;
-    document.getElementById('progress-fill').style.width = `${progress}%`;
-    document.getElementById('progress-fill').className = `progress-bar h-full ${progress < 50 ? 'bg-indigo-400' : progress < 90 ? 'bg-indigo-500' : 'bg-green-600'} rounded-full`;
+    const progress = (player.distance / TOTAL_DISTANCE) * 100;
+    document.getElementById('distance-value').textContent = `${player.distance} / ${TOTAL_DISTANCE} miles`;
+    document.getElementById('progress-fill').style.width = `${progress}%`;
+    document.getElementById('progress-fill').className = `progress-bar h-full ${progress < 50 ? 'bg-indigo-400' : progress < 90 ? 'bg-indigo-500' : 'bg-green-600'} rounded-full`;
 
-    document.getElementById('status-info').innerHTML = `
-        <div class="font-bold text-xl text-indigo-700">${player.profession}</div>
-        <div class="text-sm text-gray-500">Journey: ${START_CITY} to ${END_CITY}</div>
-    `;
-    
-    if (player.distance >= TOTAL_DISTANCE && player.is_alive) {
-        endGame(true);
-    } else if (!player.is_alive) {
-        endGame(false);
-    }
+    document.getElementById('status-info').innerHTML = `
+        <div class="font-bold text-xl text-indigo-700">${player.profession}</div>
+        <div class="text-sm text-gray-500">Journey: ${START_CITY} to ${END_CITY}</div>
+    `;
+    
+    if (player.distance >= TOTAL_DISTANCE && player.is_alive) {
+        endGame(true);
+    } else if (!player.is_alive) {
+        endGame(false);
+    }
 }
 
 function endGame(isWin) {
-    isProcessing = true;
-    const title = isWin ? "CONGRATULATIONS!" : "GAME OVER.";
-    const message = isWin ? `You successfully reached ${END_CITY}!` : `Reason: ${player.game_over_reason}`;
-    
-    player.logMessage(`--- ${title} ---`, isWin ? 'text-green-700 font-bold' : 'text-red-700 font-bold');
-    player.logMessage(message, isWin ? 'text-green-700' : 'text-red-700');
-    player.logMessage("Refresh the page to play again.", 'text-gray-500');
+    isProcessing = true;
+    const title = isWin ? "CONGRATULATIONS!" : "GAME OVER.";
+    const message = isWin ? `You successfully reached ${END_CITY}!` : `Reason: ${player.game_over_reason}`;
+    
+    player.logMessage(`--- ${title} ---`, isWin ? 'text-green-700 font-bold' : 'text-red-700 font-bold');
+    player.logMessage(message, isWin ? 'text-green-700' : 'text-red-700');
+    player.logMessage("Refresh the page to play again.", 'text-gray-500');
 
-    document.getElementById('action-controls').innerHTML = '';
-    document.getElementById('scenario-display').innerHTML = `
-        <div class="text-center p-6 bg-white rounded-lg shadow-xl">
-            <h2 class="text-3xl font-extrabold mb-4 ${isWin ? 'text-green-600' : 'text-red-600'}">${title}</h2>
-            <p class="text-lg text-gray-700">${message}</p>
-        </div>
-    `;
+    document.getElementById('action-controls').innerHTML = '';
+    document.getElementById('scenario-display').innerHTML = `
+        <div class="text-center p-6 bg-white rounded-lg shadow-xl">
+            <h2 class="text-3xl font-extrabold mb-4 ${isWin ? 'text-green-600' : 'text-red-600'}">${title}</h2>
+            <p class="text-lg text-gray-700">${message}</p>
+        </div>
+    `;
 }
 
 
 // --- AI API Integration & Scenario Generation ---
 
 async function fetchWithBackoff(url, options, maxRetries = 5) {
-    for (let i = 0; i < maxRetries; i++) {
-        try {
-            const response = await fetch(url, options);
-            if (response.ok) {
-                return response.json();
-            }
-            if (response.status === 429 && i < maxRetries - 1) {
-                const delay = Math.pow(2, i) * 1000 + Math.random() * 1000;
-                await new Promise(resolve => setTimeout(resolve, delay));
-                continue;
-            }
-            throw new Error(`API request failed with status ${response.status}`);
-        } catch (error) {
-            if (i === maxRetries - 1) throw error;
-            const delay = Math.pow(2, i) * 1000 + Math.random() * 1000;
-            await new Promise(resolve => setTimeout(resolve, delay));
-        }
-    }
+    for (let i = 0; i < maxRetries; i++) {
+        try {
+            const response = await fetch(url, options);
+            if (response.ok) {
+                return response.json();
+            }
+            if (response.status === 429 && i < maxRetries - 1) {
+                const delay = Math.pow(2, i) * 1000 + Math.random() * 1000;
+                await new Promise(resolve => setTimeout(resolve, delay));
+                continue;
+            }
+            throw new Error(`API request failed with status ${response.status}`);
+        } catch (error) {
+            if (i === maxRetries - 1) throw error;
+            const delay = Math.pow(2, i) * 1000 + Math.random() * 1000;
+            await new Promise(resolve => setTimeout(resolve, delay));
+        }
+    }
 }
 
 async function generateAIScenario() {
-    player.logMessage("Requesting new, unique scenario from AI...", 'text-yellow-600');
-    isProcessing = true;
-    updateUI();
+    player.logMessage("Requesting new, unique scenario from AI...", 'text-yellow-600');
+    isProcessing = true;
+    updateUI();
 
-    document.getElementById('scenario-display').innerHTML = `
-        <div class="text-center p-6 bg-yellow-100 rounded-lg shadow-md">
-            <h2 class="text-2xl font-bold text-yellow-700">Generating Scenario...</h2>
-            <p class="text-gray-600 mt-2">The AI is creating a dynamic challenge tailored to your journey.</p>
-        </div>
-    `;
+    document.getElementById('scenario-display').innerHTML = `
+        <div class="text-center p-6 bg-yellow-100 rounded-lg shadow-md">
+            <h2 class="text-2xl font-bold text-yellow-700">Generating Scenario...</h2>
+            <p class="text-gray-600 mt-2">The AI is creating a dynamic challenge tailored to your journey.</p>
+        </div>
+    `;
 
-    const systemPrompt = `You are the Game Master for a game called "The 2025 Digital Nomad Trail". Your task is to generate a unique, unpredictable, and highly specific scenario tailored to a remote worker traveling across the US. The scenario MUST be relevant to CURRENT EVENTS or timeless digital nomad challenges: tech failure, gig economy paywalls, political instability, unexpected travel costs, or mental health burnout. You MUST return the output as a valid JSON object following the provided schema, including exactly two distinct choices (A and B) with realistic consequences. Do not add any text or explanation outside the JSON.`;
-    const userQuery = `Generate a new event scenario for a player who is currently a ${player.profession}. The event should involve a choice between two actions, each with clear impacts on Cash, Laptop Health (1-100), and Mental Health (1-100). Keep the effects moderate (e.g., changes between -100 and +100 for cash, and -30 to +15 for health).`;
+    const systemPrompt = `You are the Game Master for a game called "The 2025 Digital Nomad Trail". Your task is to generate a unique, unpredictable, and highly specific scenario tailored to a remote worker traveling across the US. The scenario MUST be relevant to CURRENT EVENTS or timeless digital nomad challenges: tech failure, gig economy paywalls, political instability, unexpected travel costs, or mental health burnout. You MUST return the output as a valid JSON object following the provided schema, including exactly two distinct choices (A and B) with realistic consequences. Do not add any text or explanation outside the JSON.`;
+    const userQuery = `Generate a new event scenario for a player who is currently a ${player.profession}. The event should involve a choice between two actions, each with clear impacts on Cash, Laptop Health (1-100), and Mental Health (1-100). Keep the effects moderate (e.g., changes between -100 and +100 for cash, and -30 to +15 for health).`;
 
-    const scenarioSchema = {
-        type: "OBJECT",
-        properties: {
-            title: { type: "STRING", description: "A catchy, short title for the event, e.g., 'Server Meltdown' or 'Unexpected Checkpoint'." },
-            description: { type: "STRING", description: "A detailed description of the event unfolding, setting the scene." },
-            choices: {
-                type: "ARRAY",
-                description: "Exactly two distinct choices the player can make, A and B.",
-                items: {
-                    type: "OBJECT",
-                    properties: {
-                        option: { type: "STRING", description: "The text for the player's choice (e.g., 'Pay for premium repairs' or 'Attempt DIY fix')." },
-                        effect_cash: { type: "INTEGER", description: "Change to player cash. Positive is gain, negative is loss. Range: -200 to 200." },
-                        effect_laptop: { type: "INTEGER", description: "Change to laptop health (1-100). Positive is gain, negative is loss. Range: -30 to 15." },
-                        effect_mental: { type: "INTEGER", description: "Change to mental health (1-100). Positive is gain, negative is loss. Range: -20 to 10." },
-                        outcome_text: { type: "STRING", description: "A brief, narrative consequence of making this choice." }
-                    },
-                    required: ["option", "effect_cash", "effect_laptop", "effect_mental", "outcome_text"]
-                }
-            }
-        },
-        required: ["title", "description", "choices"]
-    };
+    const scenarioSchema = {
+        type: "OBJECT",
+        properties: {
+            title: { type: "STRING", description: "A catchy, short title for the event, e.g., 'Server Meltdown' or 'Unexpected Checkpoint'." },
+            description: { type: "STRING", description: "A detailed description of the event unfolding, setting the scene." },
+            choices: {
+                type: "ARRAY",
+                description: "Exactly two distinct choices the player can make, A and B.",
+                items: {
+                    type: "OBJECT",
+                    properties: {
+                        option: { type: "STRING", description: "The text for the player's choice (e.g., 'Pay for premium repairs' or 'Attempt DIY fix')." },
+                        effect_cash: { type: "INTEGER", description: "Change to player cash. Positive is gain, negative is loss. Range: -200 to 200." },
+                        effect_laptop: { type: "INTEGER", description: "Change to laptop health (1-100). Positive is gain, negative is loss. Range: -30 to 15." },
+                        effect_mental: { type: "INTEGER", description: "Change to mental health (1-100). Positive is gain, negative is loss. Range: -20 to 10." },
+                        outcome_text: { type: "STRING", description: "A brief, narrative consequence of making this choice." }
+                    },
+                    required: ["option", "effect_cash", "effect_laptop", "effect_mental", "outcome_text"]
+                }
+            }
+        },
+        required: ["title", "description", "choices"]
+    };
 
-    const payload = {
-        contents: [{ parts: [{ text: userQuery }] }],
-        systemInstruction: { parts: [{ text: systemPrompt }] },
-        generationConfig: {
-            responseMimeType: "application/json",
-            responseSchema: scenarioSchema
-        }
-    };
+    const payload = {
+        contents: [{ parts: [{ text: userQuery }] }],
+        systemInstruction: { parts: [{ text: systemPrompt }] },
+        generationConfig: {
+            responseMimeType: "application/json",
+            responseSchema: scenarioSchema
+        }
+    };
 
-    try {
-        const response = await fetchWithBackoff(apiUrl, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
-        });
+    try {
+        const response = await fetchWithBackoff(apiUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
 
-        const result = response.candidates?.[0]?.content?.parts?.[0]?.text;
-        if (!result) {
-            throw new Error("AI returned no content.");
-        }
+        const result = response.candidates?.[0]?.content?.parts?.[0]?.text;
+        if (!result) {
+            throw new Error("AI returned no content.");
+        }
 
-        const scenario = JSON.parse(result);
-        displayScenario(scenario);
+        const scenario = JSON.parse(result);
+        displayScenario(scenario);
 
-    } catch (error) {
-        console.error("AI Scenario Generation Failed:", error);
-        player.logMessage("Error generating AI scenario. Applying default setback.", 'text-red-600');
-        
-        const fallback = {
-            title: "Network Outage",
-            description: "The WiFi at your roadside motel completely died. You lose half a day's work and must use cellular data to compensate.",
-            choices: [
-                { option: "Use high-speed hotspot", effect_cash: -80, effect_laptop: 0, effect_mental: -15, outcome_text: "You salvage the day, but the data plan cost a lot." },
-                { option: "Wait it out", effect_cash: 0, effect_laptop: -5, effect_mental: -25, outcome_text: "You wasted time and the laptop battery drained from idle searching. Massive mental fatigue." }
-            ]
-        };
-        displayScenario(fallback);
-    } finally {
-        isProcessing = false;
-    }
+    } catch (error) {
+        console.error("AI Scenario Generation Failed:", error);
+        player.logMessage("Error generating AI scenario. Applying default setback.", 'text-red-600');
+        
+        const fallback = {
+            title: "Network Outage",
+            description: "The WiFi at your roadside motel completely died. You lose half a day's work and must use cellular data to compensate.",
+            choices: [
+                { option: "Use high-speed hotspot", effect_cash: -80, effect_laptop: 0, effect_mental: -15, outcome_text: "You salvage the day, but the data plan cost a lot." },
+                { option: "Wait it out", effect_cash: 0, effect_laptop: -5, effect_mental: -25, outcome_text: "You wasted time and the laptop battery drained from idle searching. Massive mental fatigue." }
+            ]
+        };
+        displayScenario(fallback);
+    } finally {
+        isProcessing = false;
+    }
 }
 
 function displayScenario(scenario) {
-    const display = document.getElementById('scenario-display');
-    const controls = document.getElementById('action-controls');
+    // 🛑 FIX 1: Store the scenario data globally
+    currentScenario = scenario;
+    
+    const display = document.getElementById('scenario-display');
+    const controls = document.getElementById('action-controls');
 
-    player.logMessage(`*** AI EVENT: ${scenario.title.toUpperCase()} ***`, 'text-indigo-800 font-semibold');
+    player.logMessage(`*** AI EVENT: ${scenario.title.toUpperCase()} ***`, 'text-indigo-800 font-semibold');
 
-    display.innerHTML = `
-        <div class="p-6 bg-white rounded-xl shadow-lg border-t-4 border-indigo-500">
-            <h2 class="text-2xl font-extrabold text-indigo-700 mb-3">${scenario.title}</h2>
-            <p class="text-gray-600 mb-4">${scenario.description}</p>
-        </div>
-    `;
+    display.innerHTML = `
+        <div class="p-6 bg-white rounded-xl shadow-lg border-t-4 border-indigo-500">
+            <h2 class="text-2xl font-extrabold text-indigo-700 mb-3">${scenario.title}</h2>
+            <p class="text-gray-600 mb-4">${scenario.description}</p>
+        </div>
+    `;
 
-    controls.innerHTML = `
-        <div class="grid md:grid-cols-2 gap-4">
-            ${scenario.choices.map((choice, index) => `
-                <button onclick="handleChoice(${index}, ${JSON.stringify(scenario.choices)})"
-                    class="p-4 bg-indigo-500 hover:bg-indigo-600 text-white font-bold rounded-xl shadow-md transition duration-150 transform hover:scale-[1.02] text-left">
-                    <span class="text-lg block font-mono mb-1">Choice ${String.fromCharCode(65 + index)}:</span>
-                    <span class="block">${choice.option}</span>
-                </button>
-            `).join('')}
-        </div>
-    `;
+    controls.innerHTML = `
+        <div class="grid md:grid-cols-2 gap-4">
+            ${scenario.choices.map((choice, index) => `
+                <button onclick="handleChoice(${index})" // 🛑 FIX 2: Only pass the index
+                    class="p-4 bg-indigo-500 hover:bg-indigo-600 text-white font-bold rounded-xl shadow-md transition duration-150 transform hover:scale-[1.02] text-left">
+                    <span class="text-lg block font-mono mb-1">Choice ${String.fromCharCode(65 + index)}:</span>
+                    <span class="block">${choice.option}</span>
+                </button>
+            `).join('')}
+        </div>
+    `;
 }
 
-function handleChoice(choiceIndex, choices) {
-    if (isProcessing) return;
-    const choice = choices[choiceIndex];
+// Change function signature to only accept choiceIndex
+function handleChoice(choiceIndex) { 
+    if (isProcessing || !currentScenario) return; 
+    
+    // 🛑 FIX 3: Get the choices from the global variable
+    const choices = currentScenario.choices;
+    const choice = choices[choiceIndex];
 
-    player.applyEffect(
-        choice.effect_cash, 
-        choice.effect_laptop, 
-        choice.effect_mental, 
-        0, 
-        choice.outcome_text
-    );
+    player.applyEffect(
+        choice.effect_cash, 
+        choice.effect_laptop, 
+        choice.effect_mental, 
+        0, 
+        choice.outcome_text
+    );
 
-    document.getElementById('scenario-display').innerHTML = '';
-    document.getElementById('action-controls').innerHTML = `
-        <button id="continue-btn" onclick="continueJourney()" class="w-full p-4 bg-green-600 hover:bg-green-700 text-white font-bold rounded-xl shadow-lg transition duration-150">
-            Press to Continue Journey
-        </button>
-    `;
-    updateUI();
+    document.getElementById('scenario-display').innerHTML = '';
+    document.getElementById('action-controls').innerHTML = `
+        <button id="continue-btn" onclick="continueJourney()" class="w-full p-4 bg-green-600 hover:bg-green-700 text-white font-bold rounded-xl shadow-lg transition duration-150">
+            Press to Continue Journey
+        </button>
+    `;
+    currentScenario = null; // Clear the scenario after choice
+    updateUI();
 }
 
 // --- Core Game Loop Functions ---
 
 function continueJourney() {
-    if (isProcessing) return;
+    if (isProcessing) return;
 
-    const miles_traveled = Math.floor(Math.random() * (200 - 100 + 1)) + 100;
-    player.distance = Math.min(TOTAL_DISTANCE, player.distance + miles_traveled);
+    const miles_traveled = Math.floor(Math.random() * (200 - 100 + 1)) + 100;
+    player.distance = Math.min(TOTAL_DISTANCE, player.distance + miles_traveled);
 
-    const daily_cost = Math.floor(Math.random() * (250 - 100 + 1)) + 100;
-    player.cash -= daily_cost;
+    const daily_cost = Math.floor(Math.random() * (250 - 100 + 1)) + 100;
+    player.cash -= daily_cost;
 
-    player.laptop_health = player.clamp(player.laptop_health - (Math.floor(Math.random() * 5) + 1), 0, 100);
-    player.mental_health = player.clamp(player.mental_health - (Math.floor(Math.random() * 10) + 1), 0, 100);
+    player.laptop_health = player.clamp(player.laptop_health - (Math.floor(Math.random() * 5) + 1), 0, 100);
+    player.mental_health = player.clamp(player.mental_health - (Math.floor(Math.random() * 10) + 1), 0, 100);
 
-    player.logMessage(`Traveled ${miles_traveled} miles. Spent $${daily_cost} on essentials.`, 'text-gray-700');
-    
-    updateUI();
+    player.logMessage(`Traveled ${miles_traveled} miles. Spent $${daily_cost} on essentials.`, 'text-gray-700');
+    
+    updateUI();
 
-    if (player.checkGameOver() || player.distance >= TOTAL_DISTANCE) return;
+    if (player.checkGameOver() || player.distance >= TOTAL_DISTANCE) return;
 
-    if (Math.random() < 0.4) {
-        generateAIScenario();
-    } else {
-        document.getElementById('action-controls').innerHTML = `
-            <button id="continue-btn" onclick="continueJourney()" class="w-full p-4 bg-green-600 hover:bg-green-700 text-white font-bold rounded-xl shadow-lg transition duration-150">
-                Press to Continue Journey
-            </button>
-        `;
-    }
+    if (Math.random() < 0.4) {
+        generateAIScenario();
+    } else {
+        document.getElementById('action-controls').innerHTML = `
+            <button id="continue-btn" onclick="continueJourney()" class="w-full p-4 bg-green-600 hover:bg-green-700 text-white font-bold rounded-xl shadow-lg transition duration-150">
+                Press to Continue Journey
+            </button>
+        `;
+    }
 }
 
 
 function startGame() {
-    const professions = ["Freelance Coder", "Social Media Consultant", "Remote UX Designer"];
-    
-    document.getElementById('game-area').innerHTML = `
-        <div id="intro-card" class="max-w-md mx-auto p-8 bg-white rounded-xl shadow-2xl text-center">
-            <h1 class="text-3xl font-bold text-indigo-700 mb-6">THE 2025 AI NOMAD TRAIL</h1>
-            <p class="mb-6 text-gray-700">Journey from ${START_CITY} to ${END_CITY} (${TOTAL_DISTANCE} miles).</p>
-            <h2 class="text-xl font-semibold mb-4 text-indigo-600">Choose Your Profession:</h2>
-            <div id="profession-choices" class="space-y-3">
-                ${professions.map((p, i) => `
-                    <button onclick="selectProfession('${p}')" class="w-full p-3 bg-indigo-500 hover:bg-indigo-600 text-white font-semibold rounded-lg shadow transition duration-150">
-                        ${p}
-                    </button>
-                `).join('')}
-            </div>
-        </div>
-    `;
+    const professions = ["Freelance Coder", "Social Media Consultant", "Remote UX Designer"];
+    
+    document.getElementById('game-area').innerHTML = `
+        <div id="intro-card" class="max-w-md mx-auto p-8 bg-white rounded-xl shadow-2xl text-center">
+            <h1 class="text-3xl font-bold text-indigo-700 mb-6">THE 2025 AI NOMAD TRAIL</h1>
+            <p class="mb-6 text-gray-700">Journey from ${START_CITY} to ${END_CITY} (${TOTAL_DISTANCE} miles).</p>
+            <h2 class="text-xl font-semibold mb-4 text-indigo-600">Choose Your Profession:</h2>
+            <div id="profession-choices" class="space-y-3">
+                ${professions.map((p, i) => `
+                    <button onclick="selectProfession('${p}')" class="w-full p-3 bg-indigo-500 hover:bg-indigo-600 text-white font-semibold rounded-lg shadow transition duration-150">
+                        ${p}
+                    </button>
+                `).join('')}
+            </div>
+        </div>
+    `;
 }
 
 function selectProfession(profession) {
-    player = new Player(profession);
-    isProcessing = false;
-    
-    // Render the main game UI
-    document.getElementById('game-area').innerHTML = `
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 p-4 md:p-8">
-            
-            <div class="lg:col-span-1 space-y-6">
-                <div class="bg-white p-6 rounded-xl shadow-lg">
-                    <div id="status-info" class="pb-3 border-b border-gray-200"></div>
-                    
-                    <h3 class="text-lg font-bold mt-4 mb-3 text-gray-700">Resources</h3>
-                    <div class="space-y-3">
-                        <div class="flex justify-between items-center">
-                            <span class="font-semibold text-gray-700">Cash:</span>
-                            <span id="cash-value" class="text-2xl font-extrabold text-green-600">$3,000.00</span>
-                        </div>
-                        <div class="h-2 bg-gray-200 rounded-full">
-                            <div id="progress-fill" class="progress-bar h-full bg-indigo-500 rounded-full" style="width: 0%;"></div>
-                        </div>
-                        <div class="text-sm text-gray-500 text-right" id="distance-value">0 / 3000 miles</div>
-                    </div>
-                    
-                    <h3 class="text-lg font-bold mt-6 mb-3 text-gray-700">Health & Gear</h3>
-                    <div class="space-y-4">
-                        <div>
-                            <div id="laptop-label" class="text-sm font-medium text-gray-700">Laptop Health: 100%</div>
-                            <div class="stat-bar bg-gray-200"><div id="laptop-fill" class="stat-fill bg-green-500 h-full" style="width: 100%;"></div></div>
-                        </div>
-                        <div>
-                            <div id="mental-label" class="text-sm font-medium text-gray-700">Mental Health: 100%</div>
-                            <div class="stat-bar bg-gray-200"><div id="mental-fill" class="stat-fill bg-yellow-500 h-full" style="width: 100%;"></div></div>
-                        </div>
-                    </div>
-                </div>
+    player = new Player(profession);
+    isProcessing = false;
+    
+    // Render the main game UI
+    document.getElementById('game-area').innerHTML = `
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 p-4 md:p-8">
+            
+            <div class="lg:col-span-1 space-y-6">
+                <div class="bg-white p-6 rounded-xl shadow-lg">
+                    <div id="status-info" class="pb-3 border-b border-gray-200"></div>
+                    
+                    <h3 class="text-lg font-bold mt-4 mb-3 text-gray-700">Resources</h3>
+                    <div class="space-y-3">
+                        <div class="flex justify-between items-center">
+                            <span class="font-semibold text-gray-700">Cash:</span>
+                            <span id="cash-value" class="text-2xl font-extrabold text-green-600">$3,000.00</span>
+                        </div>
+                        <div class="h-2 bg-gray-200 rounded-full">
+                            <div id="progress-fill" class="progress-bar h-full bg-indigo-500 rounded-full" style="width: 0%;"></div>
+                        </div>
+                        <div class="text-sm text-gray-500 text-right" id="distance-value">0 / 3000 miles</div>
+                    </div>
+                    
+                    <h3 class="text-lg font-bold mt-6 mb-3 text-gray-700">Health & Gear</h3>
+                    <div class="space-y-4">
+                        <div>
+                            <div id="laptop-label" class="text-sm font-medium text-gray-700">Laptop Health: 100%</div>
+                            <div class="stat-bar bg-gray-200"><div id="laptop-fill" class="stat-fill bg-green-500 h-full" style="width: 100%;"></div></div>
+                        </div>
+                        <div>
+                            <div id="mental-label" class="text-sm font-medium text-gray-700">Mental Health: 100%</div>
+                            <div class="stat-bar bg-gray-200"><div id="mental-fill" class="stat-fill bg-yellow-500 h-full" style="width: 100%;"></div></div>
+                        </div>
+                    </div>
+                </div>
 
-                <div class="bg-gray-50 p-6 rounded-xl shadow-inner max-h-96 overflow-y-auto">
-                    <h3 class="text-lg font-bold mb-3 text-gray-700">Journey Log</h3>
-                    <div id="log-area" class="text-sm">
-                        <p class="text-gray-500">Welcome, ${player.profession}! Your journey begins.</p>
-                    </div>
-                </div>
-            </div>
+                <div class="bg-gray-50 p-6 rounded-xl shadow-inner max-h-96 overflow-y-auto">
+                    <h3 class="text-lg font-bold mb-3 text-gray-700">Journey Log</h3>
+                    <div id="log-area" class="text-sm">
+                        <p class="text-gray-500">Welcome, ${player.profession}! Your journey begins.</p>
+                    </div>
+                </div>
+            </div>
 
-            <div class="lg:col-span-2 space-y-6">
-                <div id="scenario-display" class="min-h-[150px] flex items-center justify-center">
-                    <div class="text-center text-gray-500 p-6 bg-white rounded-xl shadow-md">
-                        <span class="text-xl font-medium">Ready to travel?</span>
-                    </div>
-                </div>
+            <div class="lg:col-span-2 space-y-6">
+                <div id="scenario-display" class="min-h-[150px] flex items-center justify-center">
+                    <div class="text-center text-gray-500 p-6 bg-white rounded-xl shadow-md">
+                        <span class="text-xl font-medium">Ready to travel?</span>
+                    </div>
+                </div>
 
-                <div id="action-controls">
-                    <button id="continue-btn" onclick="continueJourney()" class="w-full p-4 bg-green-600 hover:bg-green-700 text-white font-bold rounded-xl shadow-lg transition duration-150">
-                        Press to Start Journey
-                    </button>
-                </div>
-            </div>
-        </div>
-    `;
-    updateUI();
+                <div id="action-controls">
+                    <button id="continue-btn" onclick="continueJourney()" class="w-full p-4 bg-green-600 hover:bg-green-700 text-white font-bold rounded-xl shadow-lg transition duration-150">
+                        Press to Start Journey
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+    updateUI();
 }
 
 // Initialize the game on load
 window.onload = startGame;
-    </script>
+    </script>
 </body>
 </html>
