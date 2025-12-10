@@ -84,7 +84,7 @@ class Player {
 
 let player;
 let isProcessing = false;
-let currentScenario = null; // 🛑 FIX 1: New global variable to hold the scenario object
+let currentScenario = null; 
 
 // --- UI & Initialization Functions ---
 
@@ -251,7 +251,7 @@ async function generateAIScenario() {
 function displayScenario(scenario) {
     // 🛑 FIX 1: Store the scenario data globally
     currentScenario = scenario;
-    
+    
     const display = document.getElementById('scenario-display');
     const controls = document.getElementById('action-controls');
 
@@ -267,7 +267,7 @@ function displayScenario(scenario) {
     controls.innerHTML = `
         <div class="grid md:grid-cols-2 gap-4">
             ${scenario.choices.map((choice, index) => `
-                <button onclick="handleChoice(${index})" // 🛑 FIX 2: Only pass the index
+                <button onclick="handleChoice(${index})"
                     class="p-4 bg-indigo-500 hover:bg-indigo-600 text-white font-bold rounded-xl shadow-md transition duration-150 transform hover:scale-[1.02] text-left">
                     <span class="text-lg block font-mono mb-1">Choice ${String.fromCharCode(65 + index)}:</span>
                     <span class="block">${choice.option}</span>
@@ -278,9 +278,9 @@ function displayScenario(scenario) {
 }
 
 // Change function signature to only accept choiceIndex
-function handleChoice(choiceIndex) { 
-    if (isProcessing || !currentScenario) return; 
-    
+function handleChoice(choiceIndex) { 
+    if (isProcessing || !currentScenario) return; 
+    
     // 🛑 FIX 3: Get the choices from the global variable
     const choices = currentScenario.choices;
     const choice = choices[choiceIndex];
@@ -299,7 +299,7 @@ function handleChoice(choiceIndex) {
             Press to Continue Journey
         </button>
     `;
-    currentScenario = null; // Clear the scenario after choice
+    currentScenario = null; // Clear the scenario after choice
     updateUI();
 }
 
@@ -380,13 +380,17 @@ function selectProfession(profession) {
                     
                     <h3 class="text-lg font-bold mt-6 mb-3 text-gray-700">Health & Gear</h3>
                     <div class="space-y-4">
-                        <div>
-                            <div id="laptop-label" class="text-sm font-medium text-gray-700">Laptop Health: 100%</div>
-                            <div class="stat-bar bg-gray-200"><div id="laptop-fill" class="stat-fill bg-green-500 h-full" style="width: 100%;"></div></div>
+                                                <div>
+                            <div id="laptop-label" class="text-sm font-medium text-gray-700 mb-1">Laptop Health: 100%</div>
+                            <div class="stat-bar bg-gray-200">
+                                <div id="laptop-fill" class="stat-fill bg-green-500 h-full" style="width: 100%;"></div>
+                            </div>
                         </div>
-                        <div>
-                            <div id="mental-label" class="text-sm font-medium text-gray-700">Mental Health: 100%</div>
-                            <div class="stat-bar bg-gray-200"><div id="mental-fill" class="stat-fill bg-yellow-500 h-full" style="width: 100%;"></div></div>
+                                                <div>
+                            <div id="mental-label" class="text-sm font-medium text-gray-700 mb-1">Mental Health: 100%</div>
+                            <div class="stat-bar bg-gray-200">
+                                <div id="mental-fill" class="stat-fill bg-yellow-500 h-full" style="width: 100%;"></div>
+                            </div>
                         </div>
                     </div>
                 </div>
