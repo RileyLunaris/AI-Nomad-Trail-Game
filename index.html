@@ -41,42 +41,6 @@ const PROFESSIONS = [
     { name: "DevOps Consultant", cash: 3000, laptop: 100, mental: 100, description: "Stable income, heavy reliance on equipment." }
 ];
 
-// Current US News-Based Scenarios 
-const DYNAMIC_SCENARIOS = [
-    // Based on political news (e.g., AI regulation, immigration)
-    { 
-        text: "The US President signed an executive order aiming to prevent states from regulating AI. Your new project relies on state-specific AI compliance. What do you do?",
-        options: [
-            { text: "Overhaul the project now (Major time sink, secure long-term)", cash: -300, laptop: 0, mental: -15, outcome: "The early pivot was costly but ensures future legal compliance." },
-            { text: "Wait for clarity (Save cash, risk non-compliance fines)", cash: 0, laptop: 0, mental: 5, outcome: "You saved time, but the regulatory uncertainty is making you anxious." }
-        ]
-    },
-    // Based on local/state news (e.g., Infrastructure, local politics)
-    {
-        text: "You're in the Pacific Northwest during an 'Atmospheric River' event (major flooding). Your temporary apartment's internet is out. How do you handle your deadline?",
-        options: [
-            { text: "Book an expensive hotel room with guaranteed power/Wi-Fi", cash: -450, laptop: 5, mental: 10, outcome: "The stable connection saved your deadline and your sanity." },
-            { text: "Try to work from a coffee shop with spotty mobile hotspot (Risky)", cash: -20, laptop: -10, mental: -5, outcome: "The power flickered, costing you valuable progress and stressing your laptop." }
-        ]
-    },
-    // Based on social/economic news (e.g., community action, cost of living)
-    {
-        text: "A local community group is protesting for better conditions for street vendors, causing major traffic jams and road closures, delaying your planned trip to a new city.",
-        options: [
-            { text: "Support the protest (Spend money, feel community spirit)", cash: -50, laptop: 0, mental: 15, outcome: "You bought a sign and felt motivated by the local solidarity." },
-            { text: "Find an expensive alternate route (Minimize delay, pay toll)", cash: -150, laptop: 0, mental: -5, outcome: "You bypassed the congestion quickly, but the toll hit your budget hard." }
-        ]
-    },
-    // Based on financial/tech news (e.g., AI bubble, corporate change)
-    {
-        text: "News breaks about 'AI Bubble Fears' causing a sharp drop in tech client confidence. Your main client is delaying payment and asking to renegotiate your contract.",
-        options: [
-            { text: "Offer a small discount for immediate payment (Get paid, lower cash)", cash: -400, laptop: 0, mental: 5, outcome: "You secured a partial payment but lost money on the contract value." },
-            { text: "Hold firm on the contract price (High risk, high reward)", cash: 0, laptop: 0, mental: -20, outcome: "The client delayed payment indefinitely, causing a major stress and cash flow problem." }
-        ]
-    }
-];
-
 // Player Class
 class Player {
     constructor(professionName) {
@@ -166,18 +130,60 @@ function rollForTravel() {
         updateUI(); 
     }
     
+    // NOTE: isProcessing is set to false after fetchScenarioFromAI completes (in displayCurrentScenario)
+}
+
+// *** CRUCIAL CHANGE: This now attempts to fetch a brand new scenario from a Vercel API route ***
+async function fetchScenarioFromAI() {
+    isProcessing = true;
+    const scenarioDisplay = document.getElementById('scenario-display');
+    if (scenarioDisplay) {
+        scenarioDisplay.innerHTML = `<h3 class="text-xl font-semibold mb-4 text-indigo-800">Generating Scenario...</h3><p class="text-gray-700">The AI is analyzing current US news headlines to create your next dilemma.</p>`;
+    }
+    
+    try {
+        // This endpoint MUST be created on Vercel to return a scenario JSON object
+        const response = await fetch('/api/generate-scenario', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ 
+                player_profession: player.profession,
+                current_city: "Unknown (Simulated Location)" // Can be expanded later
+            })
+        });
+
+        if (!response.ok) {
+            throw new Error(`API returned status ${response.status}`);
+        }
+
+        const data = await response.json();
+        
+        // Basic validation of the JSON structure
+        if (!data.text || !data.options || data.options.length < 2) {
+             throw new Error("AI scenario response was malformed.");
+        }
+        
+        currentScenario = data;
+        
+    } catch (error) {
+        player.logMessage(`Error fetching dynamic scenario: ${error.message}. Falling back to default dilemma.`, 'text-red-600');
+        
+        // Fallback: Use a generic, safe default if the AI API fails
+        currentScenario = {
+            text: "A technical glitch occurred while fetching real-time news. You must solve a simple coding problem now.",
+            options: [
+                { text: "Fix the bug quickly (+5 Laptop)", cash: -50, laptop: 5, mental: 0, outcome: "The bug was simple, but it cost you an hour of billable time." },
+                { text: "Ignore it and rest (-10 Mental)", cash: 0, laptop: -10, mental: 10, outcome: "You got a good nap, but the looming bug caused some laptop instability." }
+            ]
+        };
+    }
+    
+    // Now display the scenario
+    displayCurrentScenario();
     isProcessing = false;
 }
-
-// ASYNCHRONOUS SCENARIO FUNCTION (fetches from DYNAMIC_SCENARIOS)
-async function fetchScenarioFromAI() {
-    // Select a random scenario from the DYNAMIC_SCENARIOS array
-    currentScenario = DYNAMIC_SCENARIOS[Math.floor(Math.random() * DYNAMIC_SCENARIOS.length)];
-    
-    // Display the fetched scenario
-    displayCurrentScenario();
-}
-
 
 function displayCurrentScenario() {
     if (!currentScenario) return; 
@@ -387,7 +393,6 @@ function startInteractionLoop(professionName) {
     initializeGameLayout();
     updateUI(); 
     player.logMessage(`You chose: ${player.profession}. Starting with $${player.cash}, ${player.laptop_health}% Laptop, and ${player.mental_health}% Mental Health.`, 'text-green-600 font-bold');
-    // FIX: Removed the conflicting call to the old scenario logic and ensured the new one is used.
     fetchScenarioFromAI();
 }
 
