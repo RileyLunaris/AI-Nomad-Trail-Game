@@ -362,13 +362,14 @@ function handleChoice(choice) {
     if (effects && effects.cash !== undefined) {
         player.applyEffect(effects.cash, effects.laptop || 0, effects.mental || 0, 0, outcomeText);
     } else {
-        player.logMessage(`Error: Could not parse effects for choice ${choice}.`, 'text-red-500');
+        player.logMessage(`Error: Could not parse effects for choice ${choice}. Returning to travel screen.`, 'text-red-500');
     }
 
-    isProcessing = false;
+    // FIX HERE: This is the critical line to ensure the game is never locked.
+    isProcessing = false; 
     currentScenario = null;
     updateUI();
-    displayActionControls();
+    displayActionControls(); // Re-displays the "Move to Next Stop" button
 }
 
 // --- INITIALIZATION ---
