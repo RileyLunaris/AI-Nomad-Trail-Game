@@ -191,8 +191,11 @@ function displayNextScenario() {
         // Ensure Travel Button is disabled for the new scenario
         if (travelButton) {
             travelButton.disabled = true;
+            // Add the disabled style
             travelButton.classList.add('button-disabled-style');
-            travelButton.classList.remove('hover:bg-green-700');
+            // Ensure green background is removed/overridden by the disabled style
+            travelButton.classList.remove('bg-green-600'); 
+            travelButton.classList.remove('hover:bg-green-700'); 
         }
     }
     updateUI();
@@ -216,8 +219,12 @@ function handleScenarioChoice(choiceIndex) {
     const travelButton = document.getElementById('travel-button');
     if (travelButton) {
         travelButton.disabled = false;
+        
+        // FIX: Remove disabled style and explicitly re-add functional styles
         travelButton.classList.remove('button-disabled-style'); // Remove grayed-out look
+        travelButton.classList.add('bg-green-600'); // Re-add base color
         travelButton.classList.add('hover:bg-green-700'); // Restore hover effect
+        
         travelButton.focus();
     }
     
