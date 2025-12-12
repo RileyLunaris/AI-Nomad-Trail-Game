@@ -41,7 +41,43 @@ const PROFESSIONS = [
     { name: "DevOps Consultant", cash: 3000, laptop: 100, mental: 100, description: "Stable income, heavy reliance on equipment." }
 ];
 
-// Player Class
+// Current US News-Based Scenarios (Updated based on search results)
+const DYNAMIC_SCENARIOS = [
+    // Based on political news (e.g., AI regulation, immigration)
+    { 
+        text: "The US President signed an executive order aiming to prevent states from regulating AI. Your new project relies on state-specific AI compliance. What do you do?",
+        options: [
+            { text: "Overhaul the project now (Major time sink, secure long-term)", cash: -300, laptop: 0, mental: -15, outcome: "The early pivot was costly but ensures future legal compliance." },
+            { text: "Wait for clarity (Save cash, risk non-compliance fines)", cash: 0, laptop: 0, mental: 5, outcome: "You saved time, but the regulatory uncertainty is making you anxious." }
+        ]
+    },
+    // Based on local/state news (e.g., Infrastructure, local politics)
+    {
+        text: "You're in the Pacific Northwest during an 'Atmospheric River' event (major flooding). Your temporary apartment's internet is out. How do you handle your deadline?",
+        options: [
+            { text: "Book an expensive hotel room with guaranteed power/Wi-Fi", cash: -450, laptop: 5, mental: 10, outcome: "The stable connection saved your deadline and your sanity." },
+            { text: "Try to work from a coffee shop with spotty mobile hotspot (Risky)", cash: -20, laptop: -10, mental: -5, outcome: "The power flickered, costing you valuable progress and stressing your laptop." }
+        ]
+    },
+    // Based on social/economic news (e.g., community action, cost of living)
+    {
+        text: "A local community group is protesting for better conditions for street vendors, causing major traffic jams and road closures, delaying your planned trip to a new city.",
+        options: [
+            { text: "Support the protest (Spend money, feel community spirit)", cash: -50, laptop: 0, mental: 15, outcome: "You bought a sign and felt motivated by the local solidarity." },
+            { text: "Find an expensive alternate route (Minimize delay, pay toll)", cash: -150, laptop: 0, mental: -5, outcome: "You bypassed the congestion quickly, but the toll hit your budget hard." }
+        ]
+    },
+    // Based on financial/tech news (e.g., AI bubble, corporate change)
+    {
+        text: "News breaks about 'AI Bubble Fears' causing a sharp drop in tech client confidence. Your main client is delaying payment and asking to renegotiate your contract.",
+        options: [
+            { text: "Offer a small discount for immediate payment (Get paid, lower cash)", cash: -400, laptop: 0, mental: 5, outcome: "You secured a partial payment but lost money on the contract value." },
+            { text: "Hold firm on the contract price (High risk, high reward)", cash: 0, laptop: 0, mental: -20, outcome: "The client delayed payment indefinitely, causing a major stress and cash flow problem." }
+        ]
+    }
+];
+
+// --- Player Class (No Change) ---
 class Player {
     constructor(professionName) {
         const professionData = PROFESSIONS.find(p => p.name === professionName) || PROFESSIONS[0];
@@ -100,7 +136,7 @@ let player;
 let isProcessing = false;
 let currentScenario = null; 
 
-// Core Game Functions
+// --- Core Game Functions ---
 function rollForTravel() {
     if (isProcessing || !player.is_alive) return;
     isProcessing = true;
@@ -125,7 +161,8 @@ function rollForTravel() {
     updateUI();
     
     if (player.is_alive && player.distance < TOTAL_DISTANCE) {
-        displayNextScenario();
+        // Call the asynchronous scenario fetch
+        fetchScenarioFromAI();
     } else {
         updateUI(); 
     }
@@ -133,39 +170,32 @@ function rollForTravel() {
     isProcessing = false;
 }
 
-function displayNextScenario() {
-    const scenarios = [
-        { 
-            text: "Your current co-working space has slow Wi-Fi. What do you do?",
-            options: [
-                { text: "Pay for premium private office (Costly, high productivity)", cash: -200, laptop: 0, mental: 10, outcome: "The private office was silent, you crushed your deadlines." },
-                { text: "Go to a coffee shop (Cheap, risky distractions)", cash: -10, laptop: -5, mental: 5, outcome: "Too much noise, but the change of scenery helped a bit." }
-            ]
-        },
-        {
-            text: "A new AI tool promises to automate 50% of your work, but costs a subscription. Purchase it?",
-            options: [
-                { text: "Buy the subscription (Major cost, high potential gain)", cash: -500, laptop: 0, mental: 0, outcome: "The tool saved you hours, allowing you to relax." },
-                { text: "Stick to your old workflow (No cost, increased fatigue)", cash: 0, laptop: 0, mental: -15, outcome: "You spent all night manually doing repetitive tasks." }
-            ]
-        },
-        {
-            text: "Your laptop is running dangerously hot due to a heavy render job. What do you do?",
-            options: [
-                { text: "Buy a cooling pad (Cost and slight delay)", cash: -80, laptop: 15, mental: 0, outcome: "The cooling pad stabilized your system, preventing permanent damage." },
-                { text: "Force the job through (Risk equipment failure)", cash: 0, laptop: -25, mental: -5, outcome: "The job finished, but your laptop sustained heavy thermal damage." }
-            ]
-        },
-        {
-            text: "You found a local digital nomad meetup. Attend it?",
-            options: [
-                { text: "Go and network (Cost of drinks, mental boost)", cash: -40, laptop: 0, mental: 20, outcome: "Great conversation! You feel motivated and connected." },
-                { text: "Stay in and work (Save money, feel isolated)", cash: 0, laptop: 0, mental: -10, outcome: "You got work done, but the loneliness is starting to set in." }
-            ]
-        }
-    ];
+// NEW ASYNCHRONOUS SCENARIO FUNCTION
+async function fetchScenarioFromAI() {
+    // In a real application, you would use fetch() here:
+    /*
+    const apiKey = 'YOUR_DIGITAL_KEY'; // Assumes this is configured correctly on the server/proxy
+    const prompt = `Generate one digital nomad scenario based on recent (past 4 weeks) US news (political, local, economic) relevant to a remote worker. Format as JSON: {text: '...', options: [{text:'...', cash:0, laptop:0, mental:0, outcome:'...'}, ...]}`;
+    const response = await fetch('YOUR_AI_API_ENDPOINT', { 
+        method: 'POST', 
+        headers: {'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}`},
+        body: JSON.stringify({ prompt: prompt })
+    });
+    const scenario = await response.json();
+    currentScenario = scenario;
+    */
 
-    currentScenario = scenarios[Math.floor(Math.random() * scenarios.length)];
+    // For this self-contained HTML/JS file, we use the pre-generated DYNAMIC_SCENARIOS array
+    currentScenario = DYNAMIC_SCENARIOS[Math.floor(Math.random() * DYNAMIC_SCENARIOS.length)];
+    
+    // Now that the scenario is "fetched," display it
+    displayCurrentScenario();
+}
+
+
+function displayCurrentScenario() {
+    if (!currentScenario) return; // Should not happen after fetchScenarioFromAI()
+
     const scenarioDisplay = document.getElementById('scenario-display');
     const scenarioControls = document.getElementById('scenario-controls');
     const travelButton = document.getElementById('travel-button');
@@ -176,7 +206,12 @@ function displayNextScenario() {
 
         currentScenario.options.forEach((option, index) => {
             const button = document.createElement('button');
-            button.textContent = option.text;
+            const impact = [];
+            if (option.cash !== 0) impact.push(`Cash: ${option.cash > 0 ? '+' : ''}${option.cash}`);
+            if (option.laptop !== 0) impact.push(`Laptop: ${option.laptop > 0 ? '+' : ''}${option.laptop}%`);
+            if (option.mental !== 0) impact.push(`Mental: ${option.mental > 0 ? '+' : ''}${option.mental}%`);
+
+            button.textContent = `${option.text} (${impact.join(', ')})`;
             button.id = `choice-button-${index}`;
             button.className = 'w-full px-4 py-2 mb-3 bg-indigo-500 text-white rounded-lg hover:bg-indigo-600 transition-colors shadow-md';
             button.onclick = () => handleScenarioChoice(index); 
@@ -193,6 +228,8 @@ function displayNextScenario() {
     }
     updateUI();
 }
+
+// NOTE: The previous 'displayNextScenario' is now replaced by 'fetchScenarioFromAI' -> 'displayCurrentScenario'
 
 function handleScenarioChoice(choiceIndex) {
     if (currentScenario === null || !player.is_alive) return; 
@@ -224,6 +261,8 @@ function handleScenarioChoice(choiceIndex) {
     
     currentScenario = null;
 }
+
+// --- UI and Initialization Functions (No Change) ---
 
 function updateUI() {
     const cashValueElement = document.getElementById('cash-value');
@@ -366,7 +405,7 @@ function startInteractionLoop(professionName) {
     initializeGameLayout();
     updateUI(); 
     player.logMessage(`You chose: ${player.profession}. Starting with $${player.cash}, ${player.laptop_health}% Laptop, and ${player.mental_health}% Mental Health.`, 'text-green-600 font-bold');
-    displayNextScenario();
+    fetchScenarioFromAI();
 }
 
 function showProfessionSelection() {
