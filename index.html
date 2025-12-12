@@ -206,6 +206,7 @@ function initializeGame() {
                 </div>
         </div>
     `;
+    // Removed updateUI() call here for safety.
 }
 
 function startGame(profession) {
@@ -374,6 +375,7 @@ function handleChoice(choice) {
 }
 
 // --- INITIALIZATION ---
+// This guarantees the game initialization runs immediately after the script loads.
 initializeGame();
 </script>
 </body>
