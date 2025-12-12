@@ -13,7 +13,7 @@
         .stat-fill { transition: width 0.5s; }
         #game-area { min-height: 80vh; }
         
-        /* FIX: Dedicated style for disabled travel button */
+        /* FINAL FIX: Dedicated style for disabled travel button */
         .button-disabled-style {
             background-color: #9ca3af !important; /* Tailwind gray-400 */
             cursor: not-allowed;
@@ -104,11 +104,12 @@ function rollForTravel() {
     if (isProcessing || !player.is_alive) return;
     isProcessing = true;
     
-    // Immediately clear buttons and show "Traveling..."
+    // Clear scenario buttons but keep the permanent travel button element
     const scenarioDisplay = document.getElementById('scenario-display');
-    const actionControls = document.getElementById('action-controls');
+    const scenarioControls = document.getElementById('scenario-controls'); // Use the new ID for options
+    
     if (scenarioDisplay) scenarioDisplay.innerHTML = '<p class="text-lg text-indigo-700 font-semibold">Traveling...</p><p class="text-sm text-gray-500">Wait for your next destination.</p>';
-    if (actionControls) actionControls.innerHTML = ''; 
+    if (scenarioControls) scenarioControls.innerHTML = ''; 
     
     // Simulate travel
     const distanceTraveled = Math.floor(Math.random() * 300) + 100;
@@ -169,14 +170,14 @@ function displayNextScenario() {
         }
     ];
 
-    // Set the current scenario for the interaction functions
     currentScenario = scenarios[Math.floor(Math.random() * scenarios.length)];
     const scenarioDisplay = document.getElementById('scenario-display');
-    const actionControls = document.getElementById('action-controls');
+    const scenarioControls = document.getElementById('scenario-controls'); // Scenario options buttons
+    const travelButton = document.getElementById('travel-button');
 
-    if (scenarioDisplay && actionControls) {
+    if (scenarioDisplay && scenarioControls) {
         scenarioDisplay.innerHTML = `<h3 class="text-xl font-semibold mb-4 text-indigo-800">New Stop: Decision Required</h3><p class="text-gray-700">${currentScenario.text}</p>`;
-        actionControls.innerHTML = ''; 
+        scenarioControls.innerHTML = ''; 
 
         currentScenario.options.forEach((option, index) => {
             const button = document.createElement('button');
@@ -184,26 +185,21 @@ function displayNextScenario() {
             button.id = `choice-button-${index}`;
             button.className = 'w-full px-4 py-2 mb-3 bg-indigo-500 text-white rounded-lg hover:bg-indigo-600 transition-colors shadow-md';
             button.onclick = () => handleScenarioChoice(index); 
-            actionControls.appendChild(button);
+            scenarioControls.appendChild(button);
         });
         
-        // Add the mandatory travel button
-        const travelButton = document.createElement('button');
-        travelButton.id = 'travel-button';
-        travelButton.textContent = 'Continue Journey (Travel & Risk New Event)';
-        // Start with the green color and the disabled style
-        travelButton.className = 'w-full px-4 py-3 mt-4 bg-green-600 text-white font-bold rounded-lg transition-colors shadow-lg button-disabled-style';
-        travelButton.onclick = rollForTravel;
-        actionControls.appendChild(travelButton);
-
-        // Explicitly disable the button's functionality
-        travelButton.disabled = true; 
+        // Ensure Travel Button is disabled for the new scenario
+        if (travelButton) {
+            travelButton.disabled = true;
+            travelButton.classList.add('button-disabled-style');
+            travelButton.classList.remove('hover:bg-green-700');
+        }
     }
     updateUI();
 }
 
 function handleScenarioChoice(choiceIndex) {
-    // CRITICAL FIX: If currentScenario is null, a choice has already been made, so prevent re-application.
+    // Only proceed if a choice hasn't already been made for this scenario (currentScenario is not null)
     if (currentScenario === null || !player.is_alive) return; 
 
     const choice = currentScenario.options[choiceIndex];
@@ -216,12 +212,12 @@ function handleScenarioChoice(choiceIndex) {
         if (btn) btn.disabled = true;
     });
 
-    // 2. Explicitly ENABLE the Travel Button and remove the disabled style
+    // 2. Explicitly ENABLE the Travel Button
     const travelButton = document.getElementById('travel-button');
     if (travelButton) {
         travelButton.disabled = false;
         travelButton.classList.remove('button-disabled-style'); // Remove grayed-out look
-        travelButton.classList.add('hover:bg-green-700'); // Re-enable hover effect
+        travelButton.classList.add('hover:bg-green-700'); // Restore hover effect
         travelButton.focus();
     }
     
@@ -249,7 +245,6 @@ function updateUI() {
         const value = Math.max(0, stat.value);
         let colorClass = 'bg-green-500';
 
-        // Set colors based on health
         if (stat.id === 'laptop') {
             colorClass = (value < 20) ? 'bg-red-600' : (value < 50) ? 'bg-orange-500' : 'bg-green-500';
         } else if (stat.id === 'mental') {
@@ -304,6 +299,7 @@ function endGame(isWin) {
     const actionControls = document.getElementById('action-controls');
     const scenarioDisplay = document.getElementById('scenario-display');
 
+    // Hide all interaction elements
     if (actionControls) actionControls.innerHTML = '';
     
     if (scenarioDisplay) {
@@ -319,6 +315,7 @@ function endGame(isWin) {
 
 function initializeGameLayout() {
     const gameArea = document.getElementById('game-area');
+    // We modify the layout to separate scenario options from the permanent travel button
     gameArea.innerHTML = `
         <div class="max-w-4xl mx-auto bg-white p-8 rounded-xl shadow-2xl">
             <h1 class="text-4xl font-extrabold text-indigo-700 mb-6 border-b pb-3">The 2025 AI Nomad Trail</h1>
@@ -354,9 +351,14 @@ function initializeGameLayout() {
                 <h3 class="text-xl font-semibold text-indigo-800">Choose Your Path</h3>
                 <p class="text-gray-700 mt-2">Select your digital nomad profession to begin your journey.</p>
             </div>
-
+            
             <div id="action-controls" class="space-y-4">
+                <div id="scenario-controls" class="space-y-4">
                 </div>
+                <button id="travel-button" onclick="rollForTravel()" class="w-full px-4 py-3 mt-4 bg-green-600 text-white font-bold rounded-lg transition-colors shadow-lg button-disabled-style" disabled>
+                    Continue Journey (Travel & Risk New Event)
+                </button>
+            </div>
             
             <div class="mt-8 pt-4 border-t">
                 <h4 class="text-lg font-semibold text-gray-800 mb-2">Journey Log</h4>
@@ -369,29 +371,34 @@ function initializeGameLayout() {
 
 // --- Game Flow Control ---
 
-function startGame(professionName) {
+function startInteractionLoop(professionName) {
     player = new Player(professionName);
     initializeGameLayout();
     updateUI(); 
     
     player.logMessage(`You chose: ${player.profession}. Starting with $${player.cash}, ${player.laptop_health}% Laptop, and ${player.mental_health}% Mental Health.`, 'text-green-600 font-bold');
     
+    // Start the game by displaying the first event, which will disable the travel button
     displayNextScenario();
 }
 
 function showProfessionSelection() {
     initializeGameLayout();
     const scenarioDisplay = document.getElementById('scenario-display');
-    const actionControls = document.getElementById('action-controls');
+    const scenarioControls = document.getElementById('scenario-controls');
     const logArea = document.getElementById('log-area');
+    const travelButton = document.getElementById('travel-button');
 
-    if (scenarioDisplay && actionControls) {
+    // Hide the permanent travel button during setup
+    if (travelButton) travelButton.style.display = 'none';
+
+    if (scenarioDisplay && scenarioControls) {
         scenarioDisplay.innerHTML = `
             <h3 class="text-xl font-semibold text-indigo-800">Welcome to the AI Nomad Trail!</h3>
             <p class="text-gray-700 mt-2">Select your starting profession to begin the journey from ${START_CITY} to ${END_CITY}.</p>
             <p class="text-sm text-gray-500 mt-2">Click your profession below to begin. Your stats are crucial for survival!</p>
         `;
-        actionControls.innerHTML = '';
+        scenarioControls.innerHTML = '';
         if (logArea) logArea.innerHTML = '';
 
         PROFESSIONS.forEach(p => {
@@ -406,10 +413,14 @@ function showProfessionSelection() {
             const button = document.createElement('button');
             button.textContent = `Start as ${p.name}`;
             button.className = 'w-full mt-2 px-4 py-2 bg-indigo-500 text-white font-semibold rounded-lg hover:bg-indigo-600 transition-colors shadow-lg';
-            button.onclick = () => startGame(p.name);
+            button.onclick = () => {
+                // Show the permanent travel button when the game starts
+                if (travelButton) travelButton.style.display = 'block';
+                startInteractionLoop(p.name);
+            };
 
             professionDiv.appendChild(button);
-            actionControls.appendChild(professionDiv);
+            scenarioControls.appendChild(professionDiv);
         });
     }
 }
