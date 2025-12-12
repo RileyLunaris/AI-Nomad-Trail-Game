@@ -159,6 +159,7 @@ function endGame(isWin) {
 
 function initializeGame() {
     const gameArea = document.getElementById('game-area');
+    // The entire game HTML structure is assigned to gameArea.innerHTML
     gameArea.innerHTML = `
         <div class="max-w-4xl mx-auto bg-white p-8 rounded-xl shadow-2xl">
             <h1 class="text-4xl font-extrabold text-indigo-700 mb-6 border-b pb-3">The 2025 AI Nomad Trail</h1>
@@ -206,7 +207,8 @@ function initializeGame() {
                 </div>
         </div>
     `;
-    // Removed updateUI() call here for safety.
+    // Removed all immediate calls to updateUI() or logMessage() from initializeGame()
+    // to prevent the "Cannot set properties of null" error.
 }
 
 function startGame(profession) {
@@ -247,7 +249,6 @@ function moveNextStop() {
 
 async function generateAIScenario() {
     // FINAL FIX: Correct syntax for Vercel static environment variable access.
-    // This resolves the "ReferenceError: process is not defined"
     const GEMINI_API_KEY = NEXT_PUBLIC_GEMINI_API_KEY;
 
     if (!GEMINI_API_KEY) {
@@ -375,7 +376,8 @@ function handleChoice(choice) {
 }
 
 // --- INITIALIZATION ---
-// This guarantees the game initialization runs immediately after the script loads.
+// This guarantees the game initialization runs immediately after the script loads, 
+// and without recursive calls that caused the previous TypeError.
 initializeGame();
 </script>
 </body>
