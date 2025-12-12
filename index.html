@@ -100,7 +100,7 @@ let currentScenario = null;
 // --- Core Game Functions ---
 
 function rollForTravel() {
-    // Lock prevents repeated travel clicks
+    // Lock prevents repeated travel clicks.
     if (isProcessing || !player.is_alive) return;
     isProcessing = true;
     
@@ -169,6 +169,7 @@ function displayNextScenario() {
         }
     ];
 
+    // Set the current scenario for the interaction functions
     currentScenario = scenarios[Math.floor(Math.random() * scenarios.length)];
     const scenarioDisplay = document.getElementById('scenario-display');
     const actionControls = document.getElementById('action-controls');
@@ -190,19 +191,19 @@ function displayNextScenario() {
         const travelButton = document.createElement('button');
         travelButton.id = 'travel-button';
         travelButton.textContent = 'Continue Journey (Travel & Risk New Event)';
-        // NOTE: Adding the dedicated disabled style class here.
-        travelButton.className = 'w-full px-4 py-3 mt-4 bg-green-600 text-white font-bold rounded-lg hover:bg-green-700 transition-colors shadow-lg button-disabled-style';
+        // Start with the green color and the disabled style
+        travelButton.className = 'w-full px-4 py-3 mt-4 bg-green-600 text-white font-bold rounded-lg transition-colors shadow-lg button-disabled-style';
         travelButton.onclick = rollForTravel;
         actionControls.appendChild(travelButton);
 
-        // Explicitly disable the button
+        // Explicitly disable the button's functionality
         travelButton.disabled = true; 
     }
     updateUI();
 }
 
 function handleScenarioChoice(choiceIndex) {
-    // FIX: Use a robust check to ensure choice logic only runs once
+    // CRITICAL FIX: If currentScenario is null, a choice has already been made, so prevent re-application.
     if (currentScenario === null || !player.is_alive) return; 
 
     const choice = currentScenario.options[choiceIndex];
@@ -219,12 +220,12 @@ function handleScenarioChoice(choiceIndex) {
     const travelButton = document.getElementById('travel-button');
     if (travelButton) {
         travelButton.disabled = false;
-        // FIX: Remove the dedicated disabled style class
-        travelButton.classList.remove('button-disabled-style');
+        travelButton.classList.remove('button-disabled-style'); // Remove grayed-out look
+        travelButton.classList.add('hover:bg-green-700'); // Re-enable hover effect
         travelButton.focus();
     }
     
-    // Clear current scenario to prevent double-choice and signal it's done
+    // Signal that a choice has been processed for this event
     currentScenario = null;
 }
 
