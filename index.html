@@ -199,8 +199,109 @@ function endGame(isWin) {
 }
 
 function initializeGameLayout() {
-    document.getElementById('game-area').innerHTML = `
+    const gameArea = document.getElementById('game-area');
+    gameArea.innerHTML = `
         <div class="max-w-4xl mx-auto bg-white p-8 rounded-xl shadow-2xl">
-            <h1 class="text-4xl font-extrabold text-indigo-700 mb-6">The 2025 AI Nomad Trail</h1>
+            <h1 class="text-4xl font-extrabold text-indigo-700 mb-6 border-b pb-3">The 2025 AI Nomad Trail</h1>
+            
             <div id="status-info" class="mb-6"></div>
-            <div class="
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                <div class="bg-gray-100 p-4 rounded-lg shadow-inner">
+                    <div class="font-bold text-gray-700 mb-2">Cash: <span id="cash-value" class="text-green-600"></span></div>
+                    <p id="distance-value" class="text-sm text-gray-500"></p>
+                </div>
+                
+                <div class="bg-gray-100 p-4 rounded-lg shadow-inner">
+                    <p id="laptop-label" class="text-sm text-gray-700 mb-1">Laptop Health: 100%</p>
+                    <div class="stat-bar bg-gray-300">
+                        <div id="laptop-fill" class="stat-fill bg-green-500" style="width: 100%;"></div>
+                    </div>
+                </div>
+
+                <div class="bg-gray-100 p-4 rounded-lg shadow-inner">
+                    <p id="mental-label" class="text-sm text-gray-700 mb-1">Mental Health: 100%</p>
+                    <div class="stat-bar bg-gray-300">
+                        <div id="mental-fill" class="stat-fill bg-yellow-500" style="width: 100%;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-gray-200 h-3 rounded-full mb-8">
+                <div id="progress-fill" class="progress-bar h-full bg-indigo-500 rounded-full" style="width: 0%;"></div>
+            </div>
+
+            <div id="scenario-display" class="bg-indigo-50 p-6 rounded-lg shadow-inner mb-6">
+                <h3 class="text-xl font-semibold text-indigo-800">Choose Your Path</h3>
+                <p class="text-gray-700 mt-2">Select your digital nomad profession to begin your journey.</p>
+            </div>
+            
+            <div id="action-controls" class="space-y-4">
+                <div id="scenario-controls" class="space-y-4"></div>
+                <button id="travel-button" onclick="rollForTravel()" style="background-color: #9ca3af; cursor: not-allowed; opacity: 0.7;" class="w-full px-4 py-3 mt-4 text-white font-bold rounded-lg" disabled>
+                    Continue Journey (Travel & Risk New Event)
+                </button>
+            </div>
+            
+            <div class="mt-8 pt-4 border-t">
+                <h4 class="text-lg font-semibold text-gray-800 mb-2">Journey Log</h4>
+                <div id="log-area" class="h-32 overflow-y-scroll bg-gray-50 p-3 rounded border"></div>
+            </div>
+        </div>
+    `;
+}
+
+function startInteractionLoop(professionName) {
+    player = new Player(professionName);
+    initializeGameLayout();
+    updateUI(); 
+    player.logMessage(`You chose: ${player.profession}. Starting with $${player.cash}, ${player.laptop_health}% Laptop, and ${player.mental_health}% Mental Health.`, 'text-green-600 font-bold');
+    fetchScenarioFromAI();
+}
+
+function showProfessionSelection() {
+    initializeGameLayout();
+    const scenarioDisplay = document.getElementById('scenario-display');
+    const scenarioControls = document.getElementById('scenario-controls');
+    const logArea = document.getElementById('log-area');
+    const travelButton = document.getElementById('travel-button');
+
+    if (travelButton) travelButton.style.display = 'none';
+
+    if (scenarioDisplay && scenarioControls) {
+        scenarioDisplay.innerHTML = `
+            <h3 class="text-xl font-semibold text-indigo-800">Welcome to the AI Nomad Trail!</h3>
+            <p class="text-gray-700 mt-2">Select your starting profession to begin the journey from ${START_CITY} to ${END_CITY}.</p>
+            <p class="text-sm text-gray-500 mt-2">Your stats are crucial for survival!</p>
+        `;
+        scenarioControls.innerHTML = '';
+        if (logArea) logArea.innerHTML = '';
+
+        PROFESSIONS.forEach(p => {
+            const professionDiv = document.createElement('div');
+            professionDiv.className = 'p-4 bg-gray-100 rounded-lg shadow-sm hover:shadow-md transition-shadow';
+            professionDiv.innerHTML = `
+                <h4 class="font-bold text-indigo-700">${p.name}</h4>
+                <p class="text-sm text-gray-600 mb-2">${p.description}</p>
+                <p class="text-sm text-gray-500">Start Cash: <span class="text-green-600 font-semibold">$${p.cash.toLocaleString()}</span> | Laptop: ${p.laptop}% | Mental: ${p.mental}%</p>
+            `;
+
+            const button = document.createElement('button');
+            button.textContent = `Start as ${p.name}`;
+            button.className = 'w-full mt-2 px-4 py-2 bg-indigo-500 text-white font-semibold rounded-lg hover:bg-indigo-600 transition-colors shadow-lg';
+            button.onclick = () => {
+                if (travelButton) travelButton.style.display = 'block';
+                startInteractionLoop(p.name);
+            };
+
+            professionDiv.appendChild(button);
+            scenarioControls.appendChild(professionDiv);
+        });
+    }
+}
+
+// Initialize game
+showProfessionSelection();
+    </script>
+</body>
+</html>
