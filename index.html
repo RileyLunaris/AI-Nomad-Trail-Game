@@ -10,7 +10,7 @@
         body { font-family: 'Inter', sans-serif; background-color: #f7f7f9; }
         .progress-bar { transition: width 0.5s ease-in-out; }
         .stat-bar { height: 1.5rem; border-radius: 0.5rem; overflow: hidden; }
-        .stat-fill { transition: width 0.5s; }
+        .stat-fill { height: 1.5rem; border-radius: 0.5rem; overflow: hidden; transition: width 0.5s; }
         #game-area { min-height: 80vh; }
     </style>
 </head>
@@ -78,7 +78,11 @@ function rollForTravel() {
     const scenarioDisplay = document.getElementById('scenario-display');
     const scenarioControls = document.getElementById('scenario-controls');
     
-    if (scenarioDisplay) scenarioDisplay.innerHTML = '<p class="text-lg text-indigo-700 font-semibold">Traveling...</p>';
+    const scenario_display_text = Object.assign(document.createElement('p'), {
+            className: "text-lg text-indigo-700 font-semibold",
+            textContent: "Traveling...",
+    });
+    if (scenarioDisplay) scenarioDisplay.appendChild(scenario_display_text); 
     if (scenarioControls) scenarioControls.innerHTML = ''; 
     
     const distanceTraveled = Math.floor(Math.random() * 300) + 100;
@@ -144,7 +148,20 @@ function displayCurrentScenario() {
     const scenarioControls = document.getElementById('scenario-controls');
     const travelButton = document.getElementById('travel-button');
 
-    scenarioDisplay.innerHTML = `<h3 class="text-xl font-semibold mb-4 text-indigo-800">New Stop: Decision Required</h3><p class="text-gray-700">${currentScenario.text}</p>`;
+    const scenario_title = Object.assign(
+        document.createElement('h3'), {
+            className: "text-xl font-semibold mb-4 text-indigo-800", 
+            textContent: "New Stop: Decision Required", 
+    });
+    const scenario_description = Object.assign(
+        document.createElement('p'), {
+            className: "text-gray-700", 
+            textContent: `${currentScenario.text}</p>`
+    });
+    scenarioDisplay.replaceChildren(
+        scenario_title,
+        scenario_description,
+    );
     scenarioControls.innerHTML = ''; 
 
     currentScenario.options.forEach((option, index) => {
@@ -183,84 +200,265 @@ function updateUI() {
     document.getElementById('mental-fill').style.width = `${player.mental_health}%`;
     document.getElementById('mental-label').textContent = `Mental: ${player.mental_health}%`;
     
-    const progress = (player.distance / TOTAL_DISTANCE) * 100;
+    const progress = Math.min(100, (player.distance / TOTAL_DISTANCE)) * 100;
     document.getElementById('progress-fill').style.width = `${progress}%`;
     document.getElementById('distance-value').textContent = `${player.distance} / ${TOTAL_DISTANCE} miles`;
     
-    document.getElementById('status-info').innerHTML = `<div class="font-bold text-2xl text-indigo-700">${player.profession}</div>`;
-
+    const player_profession_title = Object.assign(document.createElement('div'), {
+            className: "font-bold text-2xl text-indigo-700", 
+            textContent: `${player.profession}`, 
+    });
+    document.getElementById('status-info').replaceChildren(player_profession_title);
     if (player.distance >= TOTAL_DISTANCE && player.is_alive) endGame(true);
     else if (!player.is_alive) endGame(false);
 }
 
 function endGame(isWin) {
     const title = isWin ? "CONGRATULATIONS!" : "GAME OVER.";
-    document.getElementById('scenario-display').innerHTML = `<h2 class="text-3xl font-bold">${title}</h2><button onclick="location.reload()" class="bg-blue-500 text-white p-2 mt-4 rounded">Restart</button>`;
+    const header = Object.assign(
+        document.createElement('h2'), {
+            className: "text-3xl font-bold", 
+            textContent: title,
+    });
+    const button = Object.assign(document.createElement('button'), {
+        className: "bg-blue-500 text-white p-2 mt-4 rounded",
+        textContent: "Restart", 
+    });
+    button.addEventListener("click", () => location.reload());
+    document.getElementById('scenario-display').replaceChildren(
+        header,
+        button,
+    );
 }
 
 function initializeGameLayout() {
     const gameArea = document.getElementById('game-area');
-    gameArea.innerHTML = `
-        <div class="max-w-4xl mx-auto bg-white p-8 rounded-xl shadow-2xl">
-            <h1 class="text-4xl font-extrabold text-indigo-700 mb-6 border-b pb-3">The 2025 AI Nomad Trail</h1>
-            
-            <div id="status-info" class="mb-6"></div>
-            
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-                <div class="bg-gray-100 p-4 rounded-lg shadow-inner">
-                    <div class="font-bold text-gray-700 mb-2">Cash: <span id="cash-value" class="text-green-600"></span></div>
-                    <p id="distance-value" class="text-sm text-gray-500"></p>
-                </div>
-                
-                <div class="bg-gray-100 p-4 rounded-lg shadow-inner">
-                    <p id="laptop-label" class="text-sm text-gray-700 mb-1">Laptop Health: 100%</p>
-                    <div class="stat-bar bg-gray-300">
-                        <div id="laptop-fill" class="stat-fill bg-green-500" style="width: 100%;"></div>
-                    </div>
-                </div>
+    const game = Object.assign(
+        document.createElement('div'), {
+            id: "game", 
+            className: "max-w-4xl mx-auto bg-white p-8 rounded-xl shadow-2xl", 
+    });
+    const title = Object.assign(
+        document.createElement('h1'), {
+            className: "text-4xl font-extrabold text-indigo-700 mb-6 border-b pb-3",
+            textContent: "The 2025 AI Nomad Trail",
+    });
+    
+    /* player panel */
+    const player_panel = Object.assign(
+        document.createElement('div'), {
+            id: "player-panel"
+    });
+    const player_panel_profession = Object.assign(
+        document.createElement('div'), {
+            id: "status-info",
+            className: "mb-6"
+    });
+    const player_status_grid = Object.assign(
+        document.createElement('div'), {
+            className: "grid grid-cols-1 md:grid-cols-3 gap-6 mb-6",
+    });
+    
+    /* player money card */
+    const player_stat_money_card = Object.assign(
+        document.createElement('div'), {
+            className: "bg-gray-100 p-4 rounded-lg shadow-inner",
+    });
+    const player_stat_money_label = Object.assign(
+        document.createElement('div'), {
+            className: "font-bold text-gray-700 mb-2",
+            textContent: "Cash: ",
+    });
+    const player_stat_money_value = Object.assign(
+        document.createElement('span'), {
+            id:"cash-value",
+            className: "text-green-600",
+    });
+    player_stat_money_card.replaceChildren(
+        player_stat_money_label,
+        player_stat_money_value,
+    );
+    
+    /* player equipment card */
+    const player_stat_equipment_card = Object.assign(
+        document.createElement('div'), {
+            className: "bg-gray-100 p-4 rounded-lg shadow-inner", 
+    });
+    const player_stat_equipment_label = Object.assign(
+        document.createElement('p'), {
+            id: "laptop-label", 
+            className: "text-sm text-gray-700 mb-1", 
+            textContent: "Laptop Health: 100%", 
+    });
+    const player_stat_equipment_bar = Object.assign(
+        document.createElement('div'), {
+            className: "stat-bar bg-gray-300", 
+    });
+    const player_stat_equipment_bar_fill = Object.assign(
+        document.createElement('div'), {
+            id: "laptop-fill", 
+            className: "stat-fill bg-green-500", 
+            style: "width: 100%;", 
+    });
+    player_stat_equipment_bar.appendChild(player_stat_equipment_bar_fill);
+    player_stat_equipment_card.replaceChildren(
+        player_stat_equipment_label, 
+        player_stat_equipment_bar, 
+    );
+    
+    /* player health card */
+    const player_stat_health_card = Object.assign(
+        document.createElement('div'), {
+            className: "bg-gray-100 p-4 rounded-lg shadow-inner", 
+    });
+    const player_stat_health_label = Object.assign(
+        document.createElement('p'), {
+            id: "mental-label", 
+            className: "text-sm text-gray-700 mb-1",
+            textContent: "Mental Health: 100%",
+    });
+    const player_stat_health_bar = Object.assign(
+        document.createElement('div'), {
+            className: "stat-bar bg-gray-300",
+    });
+    const player_stat_health_bar_fill = Object.assign(
+        document.createElement('div'), {
+            id: "mental-fill",
+            className: "stat-fill bg-yellow-500",
+    });
+    player_stat_health_bar.appendChild(player_stat_health_bar_fill);
+    player_stat_health_card.replaceChildren(
+        player_stat_health_label,
+        player_stat_health_bar,
+    );
+    /* progress bar */
+    const player_progress_card = Object.assign(
+        document.createElement('div'), {
+    });
+    const player_progress_bar = Object.assign(
+        document.createElement('div'), {
+            className:"bg-gray-200 h-3 rounded-full mb-8",
+    });
+    const player_progress_bar_fill = Object.assign(
+        document.createElement('div'), {
+            id: "progress-fill",
+            className: "progress-bar h-full bg-indigo-500 rounded-full", 
+            style: "width: 0%;",
+    });
+    const player_progress_value = Object.assign(
+        document.createElement('p'), {
+            id: "distance-value",
+            className:"text-sm text-gray-500",
+    });
+    player_progress_bar.appendChild(player_progress_bar_fill);
+    player_progress_card.replaceChildren(
+        player_progress_value,
+        player_progress_bar,
+    );
 
-                <div class="bg-gray-100 p-4 rounded-lg shadow-inner">
-                    <p id="mental-label" class="text-sm text-gray-700 mb-1">Mental Health: 100%</p>
-                    <div class="stat-bar bg-gray-300">
-                        <div id="mental-fill" class="stat-fill bg-yellow-500" style="width: 100%;"></div>
-                    </div>
-                </div>
-            </div>
+    /* scenario panel */
+    const scenario_panel = Object.assign(
+        document.createElement('div'), {
+            id: "scenario-display", 
+            className: "bg-indigo-50 p-6 rounded-lg shadow-inner mb-6", 
+    });
+    const scenario_panel_title = Object.assign(
+        document.createElement('h3'), {
+            id: "scenario-title", 
+            className: "text-xl font-semibold text-indigo-800", 
+            textContent: "Choose Your Path", 
+    });
+    const scenario_panel_description = Object.assign(
+        document.createElement('p'), {
+            id: "scenario-description", 
+            className: "text-gray-700 mt-2", 
+            textContext: "Select your digital nomad profession to begin your journey."
+    });
+    const scenario_panel_hint = Object.assign(
+        document.createElement('p'), {
+            id: "scenario-hit", 
+            className: "text-gray-700 mt-2", 
+    });
+    scenario_panel.replaceChildren(
+        scenario_panel_title,
+        scenario_panel_description,
+        scenario_panel_hint,
+    );
 
-            <div class="bg-gray-200 h-3 rounded-full mb-8">
-                <div id="progress-fill" class="progress-bar h-full bg-indigo-500 rounded-full" style="width: 0%;"></div>
-            </div>
+    /* options panel */
+    const options_panel = Object.assign(
+        document.createElement('div'), {
+            id: "action-controls",
+            className: "space-y-4",
+    });
+    const options_panel_grid = Object.assign(
+        document.createElement('div'), {
+            id: "scenario-controls", 
+            className: "space-y-4"
+    });
+    const options_panel_continue = Object.assign(
+        document.createElement('button'), {
+            id: "travel-button",
+            onclick: rollForTravel,
+            style: "background-color: #9ca3af; cursor: not-allowed; opacity: 0.7;",
+            className: "w-full px-4 py-3 mt-4 text-white font-bold rounded-lg",
+            textContent: "Continue Journey (Travel & Risk New Event)", 
+    });
+    options_panel.replaceChildren(
+        options_panel_grid,
+        options_panel_continue,
+    )
 
-            <div id="scenario-display" class="bg-indigo-50 p-6 rounded-lg shadow-inner mb-6">
-                <h3 class="text-xl font-semibold text-indigo-800">Choose Your Path</h3>
-                <p class="text-gray-700 mt-2">Select your digital nomad profession to begin your journey.</p>
-            </div>
-            
-            <div id="action-controls" class="space-y-4">
-                <div id="scenario-controls" class="space-y-4"></div>
-                <button id="travel-button" onclick="rollForTravel()" style="background-color: #9ca3af; cursor: not-allowed; opacity: 0.7;" class="w-full px-4 py-3 mt-4 text-white font-bold rounded-lg" disabled>
-                    Continue Journey (Travel & Risk New Event)
-                </button>
-            </div>
-            
-            <div class="mt-8 pt-4 border-t">
-                <h4 class="text-lg font-semibold text-gray-800 mb-2">Journey Log</h4>
-                <div id="log-area" class="h-32 overflow-y-scroll bg-gray-50 p-3 rounded border"></div>
-            </div>
-        </div>
-    `;
+    /* log panel */
+    const log_panel = Object.assign(
+        document.createElement('div'), {
+            id: "log-container",
+            className: "mt-8 pt-4 border-t",
+    }); 
+    const log_panel_header = Object.assign(
+        document.createElement('h4'), {
+            className: "text-lg font-semibold text-gray-800 mb-2",
+            textContent: "Journey Log",
+    });
+    const log_panel_output = Object.assign(
+        document.createElement('div'), {
+            id: "log-area", 
+            className: "h-32 overflow-y-scroll bg-gray-50 p-3 rounded border",
+    });
+    log_panel.replaceChildren(
+        log_panel_header, 
+        log_panel_output, 
+    );
+
+    /* build the dom */
+    player_status_grid.replaceChildren(
+        player_stat_money_card,
+        player_stat_equipment_card,
+        player_stat_health_card,
+    );
+    player_panel.replaceChildren(
+        player_panel_profession,
+        player_status_grid,
+        player_progress_card,
+    )
+    game.replaceChildren(
+        title,
+        player_panel,
+        scenario_panel,
+        options_panel,
+        log_panel
+    );
+    gameArea.appendChild(game);
 }
 
 function startInteractionLoop(professionName) {
     player = new Player(professionName);
-    initializeGameLayout();
     updateUI(); 
     player.logMessage(`You chose: ${player.profession}. Starting with $${player.cash}, ${player.laptop_health}% Laptop, and ${player.mental_health}% Mental Health.`, 'text-green-600 font-bold');
     fetchScenarioFromAI();
 }
 
 function showProfessionSelection() {
-    initializeGameLayout();
     const scenarioDisplay = document.getElementById('scenario-display');
     const scenarioControls = document.getElementById('scenario-controls');
     const logArea = document.getElementById('log-area');
@@ -268,24 +466,55 @@ function showProfessionSelection() {
 
     if (travelButton) travelButton.style.display = 'none';
 
-    if (scenarioDisplay && scenarioControls) {
-        scenarioDisplay.innerHTML = `
-            <h3 class="text-xl font-semibold text-indigo-800">Welcome to the AI Nomad Trail!</h3>
-            <p class="text-gray-700 mt-2">Select your starting profession to begin the journey from ${START_CITY} to ${END_CITY}.</p>
-            <p class="text-sm text-gray-500 mt-2">Your stats are crucial for survival!</p>
-        `;
+    
+    if (scenarioDisplay) {
+        const scenario_title = Object.assign(document.createElement('h3'), {
+            className: "text-xl font-semibold text-indigo-800",
+            textContent: "Welcome to the AI Nomad Trail!",
+        });
+        const scenario_description = Object.assign(document.createElement('p'), {
+            className: "text-gray-700 mt-2", 
+            textConten: `Select your starting profession to begin the journey from ${START_CITY} to ${END_CITY}`, 
+        });
+        const scenario_hint = Object.assign(document.createElement('p'), {
+            className: "text-sm text-gray-500 mt-2", 
+            textContent: "Your stats are crucial for survival!", 
+        });
+        scenarioDisplay.replaceChildren(
+            scenario_title,
+            scenario_description,
+            scenario_hint,
+        );
+
         scenarioControls.innerHTML = '';
-        if (logArea) logArea.innerHTML = '';
-
+    }
+    if (scenarioControls) {
         PROFESSIONS.forEach(p => {
-            const professionDiv = document.createElement('div');
-            professionDiv.className = 'p-4 bg-gray-100 rounded-lg shadow-sm hover:shadow-md transition-shadow';
-            professionDiv.innerHTML = `
-                <h4 class="font-bold text-indigo-700">${p.name}</h4>
-                <p class="text-sm text-gray-600 mb-2">${p.description}</p>
-                <p class="text-sm text-gray-500">Start Cash: <span class="text-green-600 font-semibold">$${p.cash.toLocaleString()}</span> | Laptop: ${p.laptop}% | Mental: ${p.mental}%</p>
-            `;
-
+            const option_card = Object.assign(document.createElement('div'), {
+                className: 'p-4 bg-gray-100 rounded-lg shadow-sm hover:shadow-md transition-shadow',
+            });
+            const option_title = Object.assign(document.createElement('h4'), {
+                className: "font-bold text-indigo-700", 
+                textContent: p.name
+            });
+            const option_description = Object.assign(document.createElement('p'), {
+                className: "text-sm text-gray-600 mb-2",
+                textContent: p.description,
+            });
+            const option_stats = Object.assign(document.createElement('p'), {
+                className: "text-sm text-gray-500"
+            });
+            const option_cash = Object.assign(document.createElement('span'), {textContent: "Cash: "});
+            const option_cash_value = Object.assign(document.createElement('span'), {
+                className: "text-green-600 font-semibold", 
+                textContent: `$${p.cash}`,
+            });
+            const option_equipment = Object.assign(document.createElement('span'), {textContent: "Laptop: "});
+            const option_equipment_value = Object.assign(document.createElement('span'), {textContent: `${p.laptop}%`});
+            const option_health = Object.assign(document.createElement('span'), {textContent: "Mental: "});
+            const option_health_value = Object.assign(document.createElement('span'), {textContent: `${p.mental}%`});
+            const option_stat_divider = Object.assign(document.createElement('span'), {textContent: " | "});
+            
             const button = document.createElement('button');
             button.textContent = `Start as ${p.name}`;
             button.className = 'w-full mt-2 px-4 py-2 bg-indigo-500 text-white font-semibold rounded-lg hover:bg-indigo-600 transition-colors shadow-lg';
@@ -293,14 +522,32 @@ function showProfessionSelection() {
                 if (travelButton) travelButton.style.display = 'block';
                 startInteractionLoop(p.name);
             };
-
-            professionDiv.appendChild(button);
-            scenarioControls.appendChild(professionDiv);
+            const option_stats_list = [
+                option_cash,
+                option_cash_value,
+                option_stat_divider,
+                option_equipment,
+                option_equipment_value,
+                option_stat_divider,
+                option_health,
+                option_health_value,
+            ];
+            for (const stat of option_stats_list) {
+                option_stats.appendChild(stat.cloneNode(true));
+            }
+            option_card.replaceChildren(
+                option_title,
+                option_description,
+                option_stats,
+                button,
+            );
+            scenarioControls.appendChild(option_card);
         });
     }
 }
 
 // Initialize game
+initializeGameLayout();
 showProfessionSelection();
     </script>
 </body>
