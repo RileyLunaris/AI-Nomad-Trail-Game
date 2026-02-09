@@ -8,5 +8,20 @@
   },
   "engines": {
     "node": "20.x"
-  }
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/RileyLunaris/AI-Nomad-Trail-Game.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/RileyLunaris/AI-Nomad-Trail-Game/issues"
+  },
+  "homepage": "https://github.com/RileyLunaris/AI-Nomad-Trail-Game#readme"
 }
