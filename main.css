@@ -1,0 +1,31 @@
+body {
+    font-family: 'Inter', sans-serif;
+    background-color: #f7f7f9;
+}
+
+#game-area {
+    min-height: 80vh;
+    padding: 1rem;
+}
+@media (min-width: 768px){
+    #game-area{
+        padding: 2rem;
+    }
+}
+
+.progress-bar {
+    transition: width 0.5s ease-in-out;
+}
+
+.stat-bar {
+    height: 1.5rem;
+    border-radius: 0.5rem;
+    overflow: hidden;
+}
+
+.stat-fill {
+    height: 1.5rem;
+    border-radius: 0.5rem;
+    overflow: hidden;
+    transition: width 0.5s;
+}
