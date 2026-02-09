@@ -455,7 +455,7 @@ function showProfessionSelection() {
         });
         const scenario_description = Object.assign(document.createElement('p'), {
             className: "text-gray-700 mt-2", 
-            textConten: `Select your starting profession to begin the journey from ${START_CITY} to ${END_CITY}`, 
+            textContent: `Select your starting profession to begin the journey from ${START_CITY} to ${END_CITY}`, 
         });
         const scenario_hint = Object.assign(document.createElement('p'), {
             className: "text-sm text-gray-500 mt-2", 
