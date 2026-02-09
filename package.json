@@ -23,5 +23,8 @@
   "bugs": {
     "url": "https://github.com/RileyLunaris/AI-Nomad-Trail-Game/issues"
   },
-  "homepage": "https://github.com/RileyLunaris/AI-Nomad-Trail-Game#readme"
+  "homepage": "https://github.com/RileyLunaris/AI-Nomad-Trail-Game#readme",
+  "devDependencies": {
+    "typescript": "^5.9.3"
+  }
 }
