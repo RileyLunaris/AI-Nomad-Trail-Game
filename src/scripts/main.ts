@@ -1,4 +1,7 @@
 
+import { z, DilemmaSchema, parse_new_scenario } from "./api/generate_scenario.js";
+// import { z } from "zod";
+
 // Game Configuration
 const START_CITY = "New York City, NY";
 const END_CITY = "San Francisco, CA";
@@ -76,6 +79,7 @@ interface ScenarioOption {
 }
 interface Scenario {
     text: string;
+    description: string;
     options: ScenarioOption[];
 }
 let currentScenario: Scenario; 
@@ -109,48 +113,67 @@ function rollForTravel() {
 
 type OptionInput = string | ScenarioOption;
 
+function mapDilemma(schemaData: z.infer<typeof DilemmaSchema>): Scenario {
+  return {
+    text: schemaData.title,
+    description: schemaData.description,
+    options: schemaData.options.map((opt) => {
+      // combine multiple player_affects into single object
+      const affects = opt.player_affects.reduce(
+        (acc, pa) => ({
+          cash: acc.cash + pa.money,
+          laptop: acc.laptop + pa.damage,
+          mental: acc.mental + pa.health,
+          luck: acc.luck + pa.luck
+        }),
+        { cash: 0, laptop: 0, mental: 0, luck: 0 }
+      );
+
+      return {
+        text: opt.text,
+        cash: affects.cash,
+        laptop: affects.laptop,
+        mental: affects.mental,
+        luck: affects.luck,
+        outcome: opt.outcome
+      };
+    })
+  };
+}
+
+
 async function fetchScenarioFromAI() {
     isProcessing = true;
     try {
-        const response = await fetch('/api/generate-scenario', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ player_profession: player.profession })
-        });
-
-        if (!response.ok) throw new Error(`API error: ${response.status}`);
-        const data = await response.json();
-        
-        // --- THE KEY FIX IS HERE ---
-        // This ensures the frontend accepts "scenario_text", "text", or "description"
-        const text = data.scenario_text || data.text || data.description;
-        const opts:OptionInput[] = data.options || data.choices;
-
-        if (!text || !opts) throw new Error("Missing JSON fields");
-
-        currentScenario = {
-            text: text,
-            options: opts.map(o => {
-                // If options are just strings from AI, convert them to objects
-                if (typeof o === 'string') {
-                    return { 
-                        text: o, 
-                        cash: -20, 
-                        laptop: -5, 
-                        mental: 5, 
-                        outcome: "You handled the situation." 
-                    };
+        const current_state = {
+            last_scenario: {
+                title: "Man charged with arson for burning down webpage.",
+                action: "spray computer with fire extinguiser",
+            },
+            locations: {
+                target: END_CITY,
+                origin: START_CITY,
+            },
+            player: {
+                profession: player.profession,
+                stats: {
+                    cash: player.cash,
+                    equipment: player.laptop_health,
+                    health: player.mental_health,
+                    luck: 50,
                 }
-                return o;
-            })
-        };
+            }
+        }
+        const scenario = await parse_new_scenario(current_state);
+        currentScenario = mapDilemma(scenario);
         
     } catch (error: unknown) {
-        if (error instanceof Error) {
+        if (error instanceof z.ZodError || error instanceof Error) {
             player.logMessage(`AI Error: ${error.message}. Using fallback.`, 'text-red-600');
         }
         currentScenario = {
-            text: "A technical glitch occurred. You must troubleshoot now.",
+            text: "A technical glitch occurred.",
+            description: "You must troubleshoot now.",
             options: [
                 { text: "Fix it quickly", cash: -50, laptop: 5, mental: 0, outcome: "Patched successfully." },
                 { text: "Ignore and rest", cash: 0, laptop: -10, mental: 10, outcome: "Feeling refreshed but buggy." }
@@ -279,7 +302,7 @@ function endGame(isWin:boolean) {
 }
 
 function initializeGameLayout() {
-    const gameArea = document.getElementById('game-area');
+    const gameArea = document.getElementById('app');
     const game = Object.assign(
         document.createElement('div'), {
             id: "game", 

@@ -3,12 +3,12 @@ body {
     background-color: #f7f7f9;
 }
 
-#game-area {
+#app {
     min-height: 80vh;
     padding: 1rem;
 }
 @media (min-width: 768px){
-    #game-area{
+    #app{
         padding: 2rem;
     }
 }
