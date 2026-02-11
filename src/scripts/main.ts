@@ -75,6 +75,7 @@ interface ScenarioOption {
     cash: number;
     laptop: number;
     mental: number;
+    luck: number;
     outcome: string;
 }
 interface Scenario {
@@ -121,12 +122,16 @@ function mapDilemma(schemaData: z.infer<typeof DilemmaSchema>): Scenario {
       // combine multiple player_affects into single object
       const affects = opt.player_affects.reduce(
         (acc, pa) => ({
-          cash: acc.cash + pa.money,
-          laptop: acc.laptop + pa.damage,
-          mental: acc.mental + pa.health,
-          luck: acc.luck + pa.luck
+            cash: acc.cash + pa.money,
+            laptop: acc.laptop + pa.damage,
+            mental: acc.mental + pa.health,
+            luck: acc.luck + pa.luck
         }),
-        { cash: 0, laptop: 0, mental: 0, luck: 0 }
+        {   cash: 0,
+            laptop: 0,
+            mental: 0,
+            luck: 0
+        }
       );
 
       return {
@@ -175,8 +180,21 @@ async function fetchScenarioFromAI() {
             text: "A technical glitch occurred.",
             description: "You must troubleshoot now.",
             options: [
-                { text: "Fix it quickly", cash: -50, laptop: 5, mental: 0, outcome: "Patched successfully." },
-                { text: "Ignore and rest", cash: 0, laptop: -10, mental: 10, outcome: "Feeling refreshed but buggy." }
+                { 
+                    text: "Fix it quickly",
+                    cash: -50, laptop: 5,
+                    mental: 0,
+                    luck: -5,
+                    outcome: "Patched successfully." 
+                },
+                { 
+                    text: "Ignore and rest", 
+                    cash: 0, 
+                    laptop: -10, 
+                    mental: 10, 
+                    luck: 10,
+                    outcome: "Feeling refreshed but buggy."
+                }
             ]
         };
     }
@@ -193,12 +211,12 @@ function displayCurrentScenario() {
     const scenario_title = Object.assign(
         document.createElement('h3'), {
             className: "text-xl font-semibold mb-4 text-indigo-800", 
-            textContent: "New Stop: Decision Required", 
+            textContent: `${currentScenario.text}`, 
     });
     const scenario_description = Object.assign(
         document.createElement('p'), {
             className: "text-gray-700", 
-            textContent: `${currentScenario.text}`
+            textContent: `${currentScenario.description}`
     });
     if (scenarioDisplay) {
         scenarioDisplay.replaceChildren(
