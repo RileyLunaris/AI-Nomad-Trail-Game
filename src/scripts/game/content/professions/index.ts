@@ -8,9 +8,10 @@ import { DumpsterPhilosopher } from "./dumpster-philosopher";
 import { EmojiLawyer } from "./emoji-lawyer";
 import { Hacker } from "./hacker";
 import { LiveStreamer } from "./live-streamer";
+import { SystemsDirector } from "./systems-director";
 
 const DEFAULT_AMOUNT = 3;
-const professions: Profession[] = [
+export const professions: Profession[] = [
     Author,
     CatTheratpist,
     Developer,
@@ -18,6 +19,7 @@ const professions: Profession[] = [
     EmojiLawyer,
     Hacker,
     LiveStreamer,
+    SystemsDirector,
 ];
 
 export function getProfessionById(id: string): Profession | undefined {
@@ -26,7 +28,7 @@ export function getProfessionById(id: string): Profession | undefined {
             return profession
 }}}
 
-export function ListRandomProfessions(amount:number=DEFAULT_AMOUNT): Profession[] {
+export function ListRandomProfessions(amount: number = DEFAULT_AMOUNT): Profession[] {
     if ((amount <= 1) || (professions.length <= amount)) amount = DEFAULT_AMOUNT;
     return shuffle_array(professions).slice(0, amount);
 }

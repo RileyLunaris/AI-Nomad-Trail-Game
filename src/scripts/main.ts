@@ -1,23 +1,28 @@
 
 import { z, DilemmaSchema, parse_new_scenario } from "./api/generate_scenario.js";
+import { professions, getProfessionById, ListRandomProfessions } from "./game/content/professions";
+import type { Profession } from "./game/types"
+import { shuffle_array } from "./utils/arrayUtils.js";
+
 // import { z } from "zod";
 
 // Game Configuration
 const START_CITY = "New York City, NY";
 const END_CITY = "San Francisco, CA";
 const TOTAL_DISTANCE = 3000;
-interface Profession {
-    name:string, 
-    description:string,
-    cash:number,
-    laptop:number,
-    mental:number,
-}
-const PROFESSIONS: Profession[] = [
-    { name: "AI Prompt Engineer", cash: 3500, laptop: 100, mental: 90, description: "High income, high burnout risk." },
-    { name: "Content Creator", cash: 2500, laptop: 95, mental: 100, description: "Flexible schedule, unpredictable income." },
-    { name: "DevOps Consultant", cash: 3000, laptop: 100, mental: 100, description: "Stable income, heavy reliance on equipment." }
-];
+// interface Profession {
+//     name:string, 
+//     description:string,
+//     cash:number,
+//     laptop:number,
+//     mental:number,
+// }
+// const PROFESSIONS: Profession[] = [
+//     { name: "AI Prompt Engineer", cash: 3500, laptop: 100, mental: 90, description: "High income, high burnout risk." },
+//     { name: "Content Creator", cash: 2500, laptop: 95, mental: 100, description: "Flexible schedule, unpredictable income." },
+//     { name: "DevOps Consultant", cash: 3000, laptop: 100, mental: 100, description: "Stable income, heavy reliance on equipment." }
+// ];
+
 
 class Player {
     profession:string;
@@ -25,17 +30,19 @@ class Player {
     cash:number;
     laptop_health:number;
     mental_health:number;
+    luck: number;
     is_alive:boolean;
     game_over_reason:string;
 
-    constructor(professionName:string) {
+    constructor(profession_id: string) {
         
-        const professionData = PROFESSIONS.find(p => p.name === professionName) || PROFESSIONS[0]!;
-        this.profession = professionName;
+        const data = professions.find(profession => profession.id === profession_id) || professions[0]!;
+        this.profession = data.name;
         this.distance = 0;
-        this.cash = professionData.cash;
-        this.laptop_health = professionData.laptop;
-        this.mental_health = professionData.mental;
+        this.cash = data.starting_stats.cash;
+        this.laptop_health = data.starting_stats.laptop_health;
+        this.mental_health = data.starting_stats.mental_health;
+        this.luck = data.starting_stats.luck;
         this.is_alive = true;
         this.game_over_reason = "";
     }
@@ -61,16 +68,17 @@ class Player {
 
     logMessage(text:string, colorClass:string = 'text-gray-800') {
         const log = document.getElementById('log-area');
-        const p = document.createElement('p');
-        p.className = `text-sm mb-1 ${colorClass}`;
-        p.textContent = text;
-        if (log) log.prepend(p);
+        const profession = document.createElement('p');
+        profession.className = `text-sm mb-1 ${colorClass}`;
+        profession.textContent = text;
+        if (log) log.prepend(profession);
     }
 }
 
 let player: Player;
 let isProcessing: boolean = false;
 interface ScenarioOption {
+    id?: string
     text: string;
     cash: number;
     laptop: number;
@@ -180,7 +188,7 @@ async function fetchScenarioFromAI() {
             text: "A technical glitch occurred.",
             description: "You must troubleshoot now.",
             options: [
-                { 
+                {
                     text: "Fix it quickly",
                     cash: -50, laptop: 5,
                     mental: 0,
@@ -238,7 +246,7 @@ function displayCurrentScenario() {
             const button = document.createElement('button');
             button.textContent = option.text;
             button.className = 'w-full px-4 py-2 mb-3 bg-indigo-500 text-white rounded-lg hover:bg-indigo-600 shadow-md';
-            button.onclick = () => handleScenarioChoice(index); 
+            button.onclick = () => handleScenarioChoice(index);
             scenarioControls.appendChild(button);
         });
     }
@@ -539,8 +547,8 @@ function initializeGameLayout() {
     if (gameArea) {gameArea.appendChild(game);}
 }
 
-function startInteractionLoop(professionName:string) {
-    player = new Player(professionName);
+function startInteractionLoop(profession_id:string) {
+    player = new Player(profession_id);
     updateUI(); 
     player.logMessage(`You chose: ${player.profession}. Starting with $${player.cash}, ${player.laptop_health}% Laptop, and ${player.mental_health}% Mental Health.`, 'text-green-600 font-bold');
     fetchScenarioFromAI();
@@ -576,17 +584,18 @@ function showProfessionSelection() {
         if (scenarioControls) {scenarioControls.innerHTML = '';}
     }
     if (scenarioControls) {
-        PROFESSIONS.forEach(p => {
+        const new_professions = ListRandomProfessions();
+        new_professions.forEach(profession => {
             const option_card = Object.assign(document.createElement('div'), {
                 className: 'p-4 bg-gray-100 rounded-lg shadow-sm hover:shadow-md transition-shadow',
             });
             const option_title = Object.assign(document.createElement('h4'), {
                 className: "font-bold text-indigo-700", 
-                textContent: p.name
+                textContent: profession.name
             });
             const option_description = Object.assign(document.createElement('p'), {
                 className: "text-sm text-gray-600 mb-2",
-                textContent: p.description,
+                textContent: profession.description,
             });
             const option_stats = Object.assign(document.createElement('p'), {
                 className: "text-sm text-gray-500"
@@ -594,20 +603,20 @@ function showProfessionSelection() {
             const option_cash = Object.assign(document.createElement('span'), {textContent: "Cash: "});
             const option_cash_value = Object.assign(document.createElement('span'), {
                 className: "text-green-600 font-semibold", 
-                textContent: `$${p.cash}`,
+                textContent: `$${profession.starting_stats.cash}`,
             });
             const option_equipment = Object.assign(document.createElement('span'), {textContent: "Laptop: "});
-            const option_equipment_value = Object.assign(document.createElement('span'), {textContent: `${p.laptop}%`});
+            const option_equipment_value = Object.assign(document.createElement('span'), {textContent: `${profession.starting_stats.laptop_health}%`});
             const option_health = Object.assign(document.createElement('span'), {textContent: "Mental: "});
-            const option_health_value = Object.assign(document.createElement('span'), {textContent: `${p.mental}%`});
+            const option_health_value = Object.assign(document.createElement('span'), {textContent: `${profession.starting_stats.mental_health}%`});
             const option_stat_divider = Object.assign(document.createElement('span'), {textContent: " | "});
             
             const button = document.createElement('button');
-            button.textContent = `Start as ${p.name}`;
+            button.textContent = `Start as ${profession.name}`;
             button.className = 'w-full mt-2 px-4 py-2 bg-indigo-500 text-white font-semibold rounded-lg hover:bg-indigo-600 transition-colors shadow-lg';
             button.onclick = () => {
                 if (travelButton) travelButton.style.display = 'block';
-                startInteractionLoop(p.name);
+                startInteractionLoop(profession.id);
             };
             const option_stats_list = [
                 option_cash,
