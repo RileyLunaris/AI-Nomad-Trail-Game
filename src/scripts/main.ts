@@ -2,6 +2,7 @@
 import { z, DilemmaSchema, parse_new_scenario } from "./api/generate_scenario.js";
 import { professions, getProfessionById, ListRandomProfessions } from "./game/content/professions";
 import type { Profession } from "./game/types"
+import TitleBar from "./game/views/components/title-bar.js";
 import { shuffle_array } from "./utils/arrayUtils.js";
 
 // import { z } from "zod";
@@ -334,11 +335,7 @@ function initializeGameLayout() {
             id: "game", 
             className: "max-w-4xl mx-auto bg-white p-8 rounded-xl shadow-2xl", 
     });
-    const title = Object.assign(
-        document.createElement('h1'), {
-            className: "text-4xl font-extrabold text-indigo-700 mb-6 border-b pb-3",
-            textContent: "The 2025 AI Nomad Trail",
-    });
+    const title = new TitleBar();
     
     /* player panel */
     const player_panel = Object.assign(
@@ -538,7 +535,7 @@ function initializeGameLayout() {
         player_progress_card,
     )
     game.replaceChildren(
-        title,
+        title.render(),
         player_panel,
         scenario_panel,
         options_panel,
