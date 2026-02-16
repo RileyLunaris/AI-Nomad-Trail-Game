@@ -2,7 +2,9 @@
 import { z, DilemmaSchema, parse_new_scenario } from "./api/generate_scenario.js";
 import { professions, getProfessionById, ListRandomProfessions } from "./game/content/professions";
 import type { Profession } from "./game/types"
-import TitleBar from "./game/views/components/title-bar.js";
+import PLayerStatBarComponent from "./ui/views/components/stats/player-stat-bar.js";
+import PlayerStatComponent from "./ui/views/components/stats/player-stat.js";
+import TitleBar from "./ui/views/components/title-bar.js";
 import { shuffle_array } from "./utils/arrayUtils.js";
 
 // import { z } from "zod";
@@ -286,11 +288,11 @@ function updateUI() {
     const laptop_fill = document.getElementById('laptop-fill')
     if (laptop_fill) {laptop_fill.style.width = `${player.laptop_health}%`;}
     const laptop_label = document.getElementById('laptop-label')
-    if (laptop_label) {laptop_label.textContent = `Laptop: ${player.laptop_health}%`;}
+    if (laptop_label) {laptop_label.textContent = `${player.laptop_health}%`;}
     const mental_fill = document.getElementById('mental-fill')
     if (mental_fill) {mental_fill.style.width = `${player.mental_health}%`;}
     const mental_label = document.getElementById('mental-label')
-    if (mental_label) {mental_label.textContent = `Mental: ${player.mental_health}%`;}
+    if (mental_label) {mental_label.textContent = `${player.mental_health}%`;}
     const progress = Math.min(1, (player.distance / TOTAL_DISTANCE)) * 100;
     const progress_fill = document.getElementById('progress-fill')
     if (progress_fill) {progress_fill.style.width = `${progress}%`;}
@@ -335,8 +337,8 @@ function initializeGameLayout() {
             id: "game", 
             className: "max-w-4xl mx-auto bg-white p-8 rounded-xl shadow-2xl", 
     });
-    const title = new TitleBar();
-    
+    const title = new TitleBar("The Ai Nomad Trail");
+    // const player = new PlayerStats
     /* player panel */
     const player_panel = Object.assign(
         document.createElement('div'), {
@@ -353,77 +355,10 @@ function initializeGameLayout() {
     });
     
     /* player money card */
-    const player_stat_money_card = Object.assign(
-        document.createElement('div'), {
-            className: "bg-gray-100 p-4 rounded-lg shadow-inner",
-    });
-    const player_stat_money_label = Object.assign(
-        document.createElement('div'), {
-            className: "font-bold text-gray-700 mb-2",
-            textContent: "Cash: ",
-    });
-    const player_stat_money_value = Object.assign(
-        document.createElement('span'), {
-            id:"cash-value",
-            className: "text-green-600",
-    });
-    player_stat_money_card.replaceChildren(
-        player_stat_money_label,
-        player_stat_money_value,
-    );
-    
-    /* player equipment card */
-    const player_stat_equipment_card = Object.assign(
-        document.createElement('div'), {
-            className: "bg-gray-100 p-4 rounded-lg shadow-inner", 
-    });
-    const player_stat_equipment_label = Object.assign(
-        document.createElement('p'), {
-            id: "laptop-label", 
-            className: "text-sm text-gray-700 mb-1", 
-            textContent: "Laptop Health: 100%", 
-    });
-    const player_stat_equipment_bar = Object.assign(
-        document.createElement('div'), {
-            className: "stat-bar bg-gray-300", 
-    });
-    const player_stat_equipment_bar_fill = Object.assign(
-        document.createElement('div'), {
-            id: "laptop-fill", 
-            className: "stat-fill bg-green-500", 
-            style: "width: 100%;", 
-    });
-    player_stat_equipment_bar.appendChild(player_stat_equipment_bar_fill);
-    player_stat_equipment_card.replaceChildren(
-        player_stat_equipment_label, 
-        player_stat_equipment_bar, 
-    );
-    
-    /* player health card */
-    const player_stat_health_card = Object.assign(
-        document.createElement('div'), {
-            className: "bg-gray-100 p-4 rounded-lg shadow-inner", 
-    });
-    const player_stat_health_label = Object.assign(
-        document.createElement('p'), {
-            id: "mental-label", 
-            className: "text-sm text-gray-700 mb-1",
-            textContent: "Mental Health: 100%",
-    });
-    const player_stat_health_bar = Object.assign(
-        document.createElement('div'), {
-            className: "stat-bar bg-gray-300",
-    });
-    const player_stat_health_bar_fill = Object.assign(
-        document.createElement('div'), {
-            id: "mental-fill",
-            className: "stat-fill bg-yellow-500",
-    });
-    player_stat_health_bar.appendChild(player_stat_health_bar_fill);
-    player_stat_health_card.replaceChildren(
-        player_stat_health_label,
-        player_stat_health_bar,
-    );
+    const player_stat_money = new PlayerStatComponent("Cash", "cash-value");
+    const player_stat_equipment = new PLayerStatBarComponent("Laptop", "laptop-label", "laptop-fill", "#22c55e");
+    const player_stat_health = new PLayerStatBarComponent("Health", "mental-label", "mental-fill", "#eab308")
+
     /* progress bar */
     const player_progress_card = Object.assign(
         document.createElement('div'), {
@@ -525,9 +460,9 @@ function initializeGameLayout() {
 
     /* build the dom */
     player_status_grid.replaceChildren(
-        player_stat_money_card,
-        player_stat_equipment_card,
-        player_stat_health_card,
+        player_stat_money.get(),
+        player_stat_equipment.get(),
+        player_stat_health.get(),
     );
     player_panel.replaceChildren(
         player_panel_profession,
@@ -535,7 +470,7 @@ function initializeGameLayout() {
         player_progress_card,
     )
     game.replaceChildren(
-        title.render(),
+        title.get(),
         player_panel,
         scenario_panel,
         options_panel,
