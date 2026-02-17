@@ -2,8 +2,7 @@
 import { z, DilemmaSchema, parse_new_scenario } from "./api/generate_scenario.js";
 import { professions, getProfessionById, ListRandomProfessions } from "./game/content/professions";
 import type { Profession } from "./game/types"
-import PLayerStatBarComponent from "./ui/views/components/stats/player-stat-bar.js";
-import PlayerStatComponent from "./ui/views/components/stats/player-stat.js";
+import { PlayerStatComponent, PLayerStatBarComponent } from "./ui/views/components/stats";
 import TitleBar from "./ui/views/components/title-bar.js";
 import { shuffle_array } from "./utils/arrayUtils.js";
 
@@ -577,4 +576,3 @@ function showProfessionSelection() {
 // Initialize game
 initializeGameLayout();
 showProfessionSelection();
-    

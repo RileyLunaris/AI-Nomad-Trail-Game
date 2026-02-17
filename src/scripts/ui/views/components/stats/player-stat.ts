@@ -2,7 +2,7 @@ import type { Formatter } from "../../../../game/types/formatter";
 
 const defaultFormatter = (value: number): string => String(value);
 
-export default class PlayerStatComponent {
+export class PlayerStatComponent {
     protected root: HTMLDivElement;
     protected label: HTMLDivElement;
     protected value: HTMLSpanElement;
