@@ -12,7 +12,7 @@ export const SystemsDirector: Profession = {
         luck: 10,
     },
     perks: [
-        "Caffine fueld problem solver",
+        "Caffine fueled problem solver",
         "Sarcasm is second language",
     ],
     drawbacks: [
