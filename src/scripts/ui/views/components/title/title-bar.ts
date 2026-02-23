@@ -1,4 +1,4 @@
-import { Component } from "./component";
+import { Component } from "../component";
 
 export class TitleBar extends Component{
     constructor(title?:string|null) {
