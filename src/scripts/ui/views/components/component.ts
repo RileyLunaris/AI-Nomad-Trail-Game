@@ -5,13 +5,15 @@ export abstract class Component {
         this.root = root;
     }
     
-    element(): HTMLElement {
+    public element(): HTMLElement {
         return this.root;
     }
 
-    set_value(...args: any[]): void {}
+    public set_value(...args: any[]): void {}
 
-    clear() {
+    public clear() {}
+
+    public remove() {
         this.root.innerHTML = "";
     }
 }

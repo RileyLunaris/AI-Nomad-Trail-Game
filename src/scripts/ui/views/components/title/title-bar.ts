@@ -6,7 +6,12 @@ export class TitleBar extends Component{
         this.root.className = "title-bar"
         this.root.textContent = title ?? "";
     }
-    set_value(title:string) {
+
+    public set_value(title:string) {
         this.root.textContent = title;
+    }
+
+    public clear() {
+        this.root.textContent = "";
     }
 }

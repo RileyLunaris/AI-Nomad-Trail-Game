@@ -13,4 +13,8 @@ export class Info extends Component{
     public set_value(value:string) {
         this.root.textContent = value;
     }
+
+    public clear() {
+        this.root.textContent = "";
+    }
 }

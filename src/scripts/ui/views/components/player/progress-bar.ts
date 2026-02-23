@@ -1,5 +1,5 @@
 import type { Formatter } from "../../../../game/types/formatter";
-import { default_formatter, limit_value_between } from "../../../../utils";
+import { default_formatter, fill_width, limit_value_between } from "../../../../utils";
 import { Component } from "../component";
 
 export class ProgressBar extends Component {
@@ -41,7 +41,13 @@ export class ProgressBar extends Component {
     }
 
     public set_value(value:number, target:number, units:string) {
-        this.value.textContent = `${limit_value_between(value, target)} / ${target} ${units}`
-        this.fill.style = `width: `
+        const percentage = limit_value_between(value, target);
+        this.value.textContent = `${percentage} / ${target} ${units}`
+        this.fill.style = fill_width(percentage)
+    }
+
+    public clear() {
+        this.value.textContent = "";
+        this.fill.style = fill_width(0)
     }
 }

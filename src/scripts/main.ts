@@ -1,29 +1,20 @@
 
-import { z, DilemmaSchema, parse_new_scenario } from "./api/generate_scenario.js";
+import { DilemmaSchema, parse_new_scenario } from "./api/generate_scenario.js";
 import { professions, getProfessionById, ListRandomProfessions } from "./game/content/professions";
 import type { Profession } from "./game/types"
-import { PlayerStatComponent, PLayerStatBarComponent } from "./ui/views/components/stats";
-import TitleBar from "./ui/views/components/title-bar.js";
-import { shuffle_array } from "./utils/arrayUtils.js";
+import { Info } from "./ui/views/components/player/info.js";
+import { ProgressBar } from "./ui/views/components/player/progress-bar.js";
+import { StatBar } from "./ui/views/components/player/stat-bar.js";
+import { Stat } from "./ui/views/components/player/stat.js";
+import { TitleBar } from "./ui/views/components/title/title-bar.js";
 
-// import { z } from "zod";
+import { z } from "zod";
+import { PLayerInfo } from "./ui/views/player-info.js";
 
 // Game Configuration
 const START_CITY = "New York City, NY";
 const END_CITY = "San Francisco, CA";
 const TOTAL_DISTANCE = 3000;
-// interface Profession {
-//     name:string, 
-//     description:string,
-//     cash:number,
-//     laptop:number,
-//     mental:number,
-// }
-// const PROFESSIONS: Profession[] = [
-//     { name: "AI Prompt Engineer", cash: 3500, laptop: 100, mental: 90, description: "High income, high burnout risk." },
-//     { name: "Content Creator", cash: 2500, laptop: 95, mental: 100, description: "Flexible schedule, unpredictable income." },
-//     { name: "DevOps Consultant", cash: 3000, laptop: 100, mental: 100, description: "Stable income, heavy reliance on equipment." }
-// ];
 
 
 class Player {
@@ -337,51 +328,10 @@ function initializeGameLayout() {
             className: "max-w-4xl mx-auto bg-white p-8 rounded-xl shadow-2xl", 
     });
     const title = new TitleBar("The Ai Nomad Trail");
-    // const player = new PlayerStats
-    /* player panel */
-    const player_panel = Object.assign(
-        document.createElement('div'), {
-            id: "player-panel"
-    });
-    const player_panel_profession = Object.assign(
-        document.createElement('div'), {
-            id: "status-info",
-            className: "mb-6"
-    });
-    const player_status_grid = Object.assign(
-        document.createElement('div'), {
-            className: "grid grid-cols-1 md:grid-cols-3 gap-6 mb-6",
-    });
-    
-    /* player money card */
-    const player_stat_money = new PlayerStatComponent("Cash", "cash-value");
-    const player_stat_equipment = new PLayerStatBarComponent("Laptop", "laptop-label", "laptop-fill", "#22c55e");
-    const player_stat_health = new PLayerStatBarComponent("Health", "mental-label", "mental-fill", "#eab308")
-
-    /* progress bar */
-    const player_progress_card = Object.assign(
-        document.createElement('div'), {
-    });
-    const player_progress_bar = Object.assign(
-        document.createElement('div'), {
-            className:"bg-gray-200 h-3 rounded-full mb-8",
-    });
-    const player_progress_bar_fill = Object.assign(
-        document.createElement('div'), {
-            id: "progress-fill",
-            className: "progress-bar h-full bg-indigo-500 rounded-full", 
-            style: "width: 0%;",
-    });
-    const player_progress_value = Object.assign(
-        document.createElement('p'), {
-            id: "distance-value",
-            className:"text-sm text-gray-500",
-    });
-    player_progress_bar.appendChild(player_progress_bar_fill);
-    player_progress_card.replaceChildren(
-        player_progress_value,
-        player_progress_bar,
-    );
+    const player_card = new PLayerInfo();
+    // const scenario_card = new Scenario();
+    // const options_card = new Options();
+    // const log_card = new Log();
 
     /* scenario panel */
     const scenario_panel = Object.assign(
@@ -458,22 +408,12 @@ function initializeGameLayout() {
     );
 
     /* build the dom */
-    player_status_grid.replaceChildren(
-        player_stat_money.get(),
-        player_stat_equipment.get(),
-        player_stat_health.get(),
-    );
-    player_panel.replaceChildren(
-        player_panel_profession,
-        player_status_grid,
-        player_progress_card,
-    )
     game.replaceChildren(
-        title.get(),
-        player_panel,
+        title.element(),
+        player_card.element(),
         scenario_panel,
         options_panel,
-        log_panel
+        log_panel,
     );
     if (gameArea) {gameArea.appendChild(game);}
 }

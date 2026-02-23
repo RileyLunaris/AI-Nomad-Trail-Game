@@ -40,4 +40,9 @@ export class StatBar extends Stat {
         this.fill.style = fill_width(limit_value_between(value));
     }
 
+    public clear() {
+        this.label.textContent = "";
+        this.value.textContent = "";
+        this.fill.style = fill_width(0);
+    }
 }
