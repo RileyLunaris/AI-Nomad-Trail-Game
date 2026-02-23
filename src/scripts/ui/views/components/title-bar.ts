@@ -1,19 +1,12 @@
-export default class TitleBar {
-    private root: HTMLDivElement;
+import { Component } from "./component";
 
-    constructor(
-        title:string
-    ) {
-        this.root = Object.assign(document.createElement("div"), {
-            className: "title-bar",
-            textContent: title,
-        });
+export class TitleBar extends Component{
+    constructor(title?:string|null) {
+        super(document.createElement("div"));
+        this.root.className = "title-bar"
+        this.root.textContent = title ?? "";
     }
-
-    get() {
-        return this.root;
-    }
-    set_text(title:string) {
+    set_value(title:string) {
         this.root.textContent = title;
     }
 }
