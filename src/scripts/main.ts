@@ -10,6 +10,7 @@ import { TitleBar } from "./ui/views/components/title/title-bar.js";
 
 import { z } from "zod";
 import { PLayerInfo } from "./ui/views/player-info.js";
+import { JourneyLog } from "./ui/views/components/log/journey-log.js";
 
 // Game Configuration
 const START_CITY = "New York City, NY";
@@ -331,7 +332,7 @@ function initializeGameLayout() {
     const player_card = new PLayerInfo();
     // const scenario_card = new Scenario();
     // const options_card = new Options();
-    // const log_card = new Log();
+    const log_card = new JourneyLog("log-container", "log-area");
 
     /* scenario panel */
     const scenario_panel = Object.assign(
@@ -386,34 +387,13 @@ function initializeGameLayout() {
         options_panel_continue,
     )
 
-    /* log panel */
-    const log_panel = Object.assign(
-        document.createElement('div'), {
-            id: "log-container",
-            className: "mt-8 pt-4 border-t",
-    }); 
-    const log_panel_header = Object.assign(
-        document.createElement('h4'), {
-            className: "text-lg font-semibold text-gray-800 mb-2",
-            textContent: "Journey Log",
-    });
-    const log_panel_output = Object.assign(
-        document.createElement('div'), {
-            id: "log-area", 
-            className: "h-32 overflow-y-scroll bg-gray-50 p-3 rounded border",
-    });
-    log_panel.replaceChildren(
-        log_panel_header, 
-        log_panel_output, 
-    );
-
     /* build the dom */
     game.replaceChildren(
         title.element(),
         player_card.element(),
         scenario_panel,
         options_panel,
-        log_panel,
+        log_card.element(),
     );
     if (gameArea) {gameArea.appendChild(game);}
 }
