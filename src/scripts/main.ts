@@ -1,16 +1,8 @@
 
 import { DilemmaSchema, parse_new_scenario } from "./api/generate_scenario.js";
 import { professions, getProfessionById, ListRandomProfessions } from "./game/content/professions";
-import type { Profession } from "./game/types"
-import { Info } from "./ui/views/components/player/info.js";
-import { ProgressBar } from "./ui/views/components/player/progress-bar.js";
-import { StatBar } from "./ui/views/components/player/stat-bar.js";
-import { Stat } from "./ui/views/components/player/stat.js";
-import { TitleBar } from "./ui/views/components/title/title-bar.js";
-
+import { JourneyLogView, PlayerInfoView, ScenarioView, TitleBarView } from "./ui/views";
 import { z } from "zod";
-import { PLayerInfo } from "./ui/views/player-info.js";
-import { JourneyLog } from "./ui/views/components/log/journey-log.js";
 
 // Game Configuration
 const START_CITY = "New York City, NY";
@@ -328,40 +320,11 @@ function initializeGameLayout() {
             id: "game", 
             className: "max-w-4xl mx-auto bg-white p-8 rounded-xl shadow-2xl", 
     });
-    const title = new TitleBar("The Ai Nomad Trail");
-    const player_card = new PLayerInfo();
-    // const scenario_card = new Scenario();
-    // const options_card = new Options();
-    const log_card = new JourneyLog("log-container", "log-area");
-
-    /* scenario panel */
-    const scenario_panel = Object.assign(
-        document.createElement('div'), {
-            id: "scenario-display", 
-            className: "bg-indigo-50 p-6 rounded-lg shadow-inner mb-6", 
-    });
-    const scenario_panel_title = Object.assign(
-        document.createElement('h3'), {
-            id: "scenario-title", 
-            className: "text-xl font-semibold text-indigo-800", 
-            textContent: "Choose Your Path", 
-    });
-    const scenario_panel_description = Object.assign(
-        document.createElement('p'), {
-            id: "scenario-description", 
-            className: "text-gray-700 mt-2", 
-            textContext: "Select your digital nomad profession to begin your journey."
-    });
-    const scenario_panel_hint = Object.assign(
-        document.createElement('p'), {
-            id: "scenario-hit", 
-            className: "text-gray-700 mt-2", 
-    });
-    scenario_panel.replaceChildren(
-        scenario_panel_title,
-        scenario_panel_description,
-        scenario_panel_hint,
-    );
+    const title = new TitleBarView("The Ai Nomad Trail");
+    const player_card = new PlayerInfoView();
+    const scenario_card = new ScenarioView("scenario-display", "scenario-title", "scenario-description", "scenario-hint");
+    // const options_card = new Options("action-controls", "scenario-controls", "travel-button",);
+    const log_card = new JourneyLogView("log-container", "log-area");
 
     /* options panel */
     const options_panel = Object.assign(
@@ -391,7 +354,7 @@ function initializeGameLayout() {
     game.replaceChildren(
         title.element(),
         player_card.element(),
-        scenario_panel,
+        scenario_card.element(),
         options_panel,
         log_card.element(),
     );

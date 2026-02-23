@@ -1,7 +1,7 @@
 import { Component } from "./components/component";
 import { StatBar, Stat, Info, ProgressBar } from "./components/player";
 
-export class PLayerInfo extends Component {
+export class PlayerInfoView extends Component {
     protected about: Info;
     protected money: Stat;
     protected equipment: StatBar;

@@ -1,6 +1,6 @@
 import { Component } from "../component";
 
-export class JourneyLog extends Component {
+export class JourneyLogView extends Component {
     header: HTMLHeadingElement;
     output: HTMLDivElement;
 
