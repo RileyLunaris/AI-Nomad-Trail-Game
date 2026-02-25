@@ -3,7 +3,7 @@
 .env.local
 
 # tests
-tests/
+# tests/
 
 # Logs
 logs
