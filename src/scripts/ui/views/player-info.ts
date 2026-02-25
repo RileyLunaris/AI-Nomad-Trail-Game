@@ -1,5 +1,5 @@
-import { Component } from "./components/component";
-import { StatBar, Stat, Info, ProgressBar } from "./components/player";
+import { Component } from "../components/component";
+import { StatBar, Stat, Info, ProgressBar } from "../components/player";
 
 export class PlayerInfoView extends Component {
     protected about: Info;

@@ -1,5 +1,5 @@
-import type { Formatter } from "../../../../game/types/formatter";
-import { default_formatter } from "../../../../utils";
+import type { Formatter } from "../../../game/types/formatter";
+import { default_formatter } from "../../../utils";
 import { Component } from "../component";
 
 export class Stat extends Component {

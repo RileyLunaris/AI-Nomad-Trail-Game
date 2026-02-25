@@ -1,7 +1,7 @@
 
 import { DilemmaSchema, parse_new_scenario } from "./api/generate_scenario.js";
 import { professions, getProfessionById, ListRandomProfessions } from "./game/content/professions";
-import { JourneyLogView, PlayerInfoView, ScenarioView, TitleBarView } from "./ui/views";
+import { JourneyLogView, PlayerInfoView, ScenarioView, TitleBarView } from "./ui";
 import { z } from "zod";
 
 // Game Configuration

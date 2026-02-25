@@ -51,6 +51,12 @@ body {
 .player-stat-value {
     color: #16a34a; /* green-600 */
 }
+.player-stat-bar-value {
+    font-size: 0.875rem;      /* 14px */
+    line-height: 1.25rem;     /* 20px (default for text-sm) */
+    color: #374151;           /* gray-700 */
+    margin-bottom: 0.25rem;   /* 4px */
+}
 .player-stat-bar {
     height: 1.5rem;
     border-radius: 0.5rem;

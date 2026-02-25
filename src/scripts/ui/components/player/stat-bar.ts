@@ -1,5 +1,5 @@
-import type { Formatter } from "../../../../game/types/formatter";
-import { default_formatter, fill_width, limit_value_between } from "../../../../utils";
+import type { Formatter } from "../../../game/types/formatter";
+import { default_formatter, fill_width, limit_value_between } from "../../../utils";
 import { Stat } from "./stat";
 
 export class StatBar extends Stat {
@@ -20,7 +20,7 @@ export class StatBar extends Stat {
         this.formatter = formatter;
         
         // Components
-        this.value.className = "player-stat-value"
+        this.value.className = "player-stat-bar-value"
         this.bar = Object.assign(document.createElement("div"), {
             className: "stat-bar bg-gray-300",
         })

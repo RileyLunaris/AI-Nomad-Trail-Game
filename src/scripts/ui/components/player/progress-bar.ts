@@ -1,5 +1,5 @@
-import type { Formatter } from "../../../../game/types/formatter";
-import { default_formatter, fill_width, limit_value_between } from "../../../../utils";
+import type { Formatter } from "../../../game/types/formatter";
+import { default_formatter, fill_width, limit_value_between } from "../../../utils";
 import { Component } from "../component";
 
 export class ProgressBar extends Component {
