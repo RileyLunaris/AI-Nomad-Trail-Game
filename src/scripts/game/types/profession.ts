@@ -1,11 +1,11 @@
-import type { Stats } from "./stats";
+import type { Stats } from ".";
 
 export interface Profession {
     id: string,
-    name: string;
-    description: string;
-    quirk: string;
-    perks?: string[];
-    drawbacks?: string[];
-    starting_stats: Stats;
+    name: string,
+    description: string,
+    quirk: string
+    perks: string[],
+    drawbacks: string[]
+    stats: Stats,
 }

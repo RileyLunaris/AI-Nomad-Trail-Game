@@ -5,10 +5,10 @@ export const Hacker: Profession = {
     name: " Hacker",
     description: "Knows every backdoor, but still struggles to remember their own Wi-Fi password. Lives for caffeine and chaos.",
     quirk: "Breaks into systems just to leave a funny ASCII art.",
-    starting_stats: {
+    stats: {
         cash: 1_200,
-        laptop_health: 80,
-        mental_health: 70,
+        equipment: 80,
+        health: 70,
         luck: 10,
     },
     perks: [

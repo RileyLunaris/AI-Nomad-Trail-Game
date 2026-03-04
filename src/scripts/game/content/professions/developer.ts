@@ -5,10 +5,10 @@ export const Developer: Profession = {
     name: "Software Developer",
     description: "Turns coffee into code, creates bugs faster than they fix them",
     quirk: "keeps a rubber ducky with them at all times.",
-    starting_stats: {
+    stats: {
         cash: 3_600,
-        laptop_health: 90,
-        mental_health: 70,
+        equipment: 90,
+        health: 70,
         luck: 25,
     },
     perks: [

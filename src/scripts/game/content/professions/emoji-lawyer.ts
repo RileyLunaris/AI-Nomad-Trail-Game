@@ -5,10 +5,10 @@ export const EmojiLawyer: Profession = {
     name: " Emoji Lawyer",
     description: "Argues cases using only emojis. Surprisingly effective.",
     quirk: "Uses 😂 for objections",
-    starting_stats: {
+    stats: {
         cash: 1_200,
-        laptop_health: 80,
-        mental_health: 70,
+        equipment: 80,
+        health: 70,
         luck: 10,
     },
     perks: [

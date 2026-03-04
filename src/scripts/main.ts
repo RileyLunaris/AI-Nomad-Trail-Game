@@ -1,6 +1,6 @@
 
 import { DilemmaSchema, parse_new_scenario } from "./api/generate_scenario.js";
-import { professions, getProfessionById, ListRandomProfessions } from "./game/content/professions";
+import { professions, ListRandomProfessions } from "./game/content/professions";
 import { JourneyLogView, PlayerInfoView, ScenarioView, TitleBarView } from "./ui";
 import { z } from "zod";
 
@@ -25,10 +25,10 @@ class Player {
         const data = professions.find(profession => profession.id === profession_id) || professions[0]!;
         this.profession = data.name;
         this.distance = 0;
-        this.cash = data.starting_stats.cash;
-        this.laptop_health = data.starting_stats.laptop_health;
-        this.mental_health = data.starting_stats.mental_health;
-        this.luck = data.starting_stats.luck;
+        this.cash = data.stats.cash!;
+        this.laptop_health = data.stats.equipment!;
+        this.mental_health = data.stats.health!;
+        this.luck = data.stats.luck!;
         this.is_alive = true;
         this.game_over_reason = "";
     }
@@ -85,8 +85,9 @@ function rollForTravel() {
     
     const scenarioDisplay = document.getElementById('scenario-display');
     const scenarioControls = document.getElementById('scenario-controls');
-    
-    const scenario_display_text = Object.assign(document.createElement('p'), {
+
+    const scenario_display_text = Object.assign(
+        document.createElement('p'), {
             className: "text-lg text-indigo-700 font-semibold",
             textContent: "Traveling...",
     });
@@ -106,38 +107,36 @@ function rollForTravel() {
     }
 }
 
-type OptionInput = string | ScenarioOption;
-
 function mapDilemma(schemaData: z.infer<typeof DilemmaSchema>): Scenario {
-  return {
-    text: schemaData.title,
-    description: schemaData.description,
-    options: schemaData.options.map((opt) => {
-      // combine multiple player_affects into single object
-      const affects = opt.player_affects.reduce(
-        (acc, pa) => ({
-            cash: acc.cash + pa.money,
-            laptop: acc.laptop + pa.damage,
-            mental: acc.mental + pa.health,
-            luck: acc.luck + pa.luck
-        }),
-        {   cash: 0,
-            laptop: 0,
-            mental: 0,
-            luck: 0
-        }
-      );
+    return {
+        text: schemaData.title,
+        description: schemaData.description,
+        options: schemaData.options.map((opt) => {
+        // combine multiple player_affects into single object
+        const affects = opt.player_affects.reduce(
+            (acc, pa) => ({
+                cash: acc.cash + pa.money,
+                laptop: acc.laptop + pa.damage,
+                mental: acc.mental + pa.health,
+                luck: acc.luck + pa.luck
+            }),
+            {   cash: 0,
+                laptop: 0,
+                mental: 0,
+                luck: 0
+            }
+        );
 
-      return {
-        text: opt.text,
-        cash: affects.cash,
-        laptop: affects.laptop,
-        mental: affects.mental,
-        luck: affects.luck,
-        outcome: opt.outcome
-      };
-    })
-  };
+            return {
+                text: opt.text,
+                cash: affects.cash,
+                laptop: affects.laptop,
+                mental: affects.mental,
+                luck: affects.luck,
+                outcome: opt.outcome
+            };
+        })
+    };
 }
 
 
@@ -220,10 +219,10 @@ function displayCurrentScenario() {
     }
 
     /* log panel */
-    const log_panel = Object.assign(
-        scenario_title,
-        scenario_description,
-    );
+    // const log_panel = Object.assign(
+    //     scenario_title,
+    //     scenario_description,
+    // );
 
     if (scenarioControls) {
         scenarioControls.innerHTML = ''; 
@@ -371,7 +370,7 @@ function startInteractionLoop(profession_id:string) {
 function showProfessionSelection() {
     const scenarioDisplay = document.getElementById('scenario-display');
     const scenarioControls = document.getElementById('scenario-controls');
-    const logArea = document.getElementById('log-area');
+    // const logArea = document.getElementById('log-area');
     const travelButton = document.getElementById('travel-button');
 
     if (travelButton) travelButton.style.display = 'none';
@@ -417,12 +416,12 @@ function showProfessionSelection() {
             const option_cash = Object.assign(document.createElement('span'), {textContent: "Cash: "});
             const option_cash_value = Object.assign(document.createElement('span'), {
                 className: "text-green-600 font-semibold", 
-                textContent: `$${profession.starting_stats.cash}`,
+                textContent: `$${profession.stats.cash}`,
             });
             const option_equipment = Object.assign(document.createElement('span'), {textContent: "Laptop: "});
-            const option_equipment_value = Object.assign(document.createElement('span'), {textContent: `${profession.starting_stats.laptop_health}%`});
+            const option_equipment_value = Object.assign(document.createElement('span'), {textContent: `${profession.stats.equipment}%`});
             const option_health = Object.assign(document.createElement('span'), {textContent: "Mental: "});
-            const option_health_value = Object.assign(document.createElement('span'), {textContent: `${profession.starting_stats.mental_health}%`});
+            const option_health_value = Object.assign(document.createElement('span'), {textContent: `${profession.stats.health}%`});
             const option_stat_divider = Object.assign(document.createElement('span'), {textContent: " | "});
             
             const button = document.createElement('button');

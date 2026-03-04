@@ -5,10 +5,10 @@ export const SystemsDirector: Profession = {
     name: "Systems Director",
     description: "Once a visionary, now mostly just keeps the servers running by moonlighting as a fire fighter.",
     quirk: "Drinks coffee like it's life support and mutters acronyms under breath.",
-    starting_stats: {
+    stats: {
         cash: 1_200,
-        laptop_health: 80,
-        mental_health: 70,
+        equipment: 80,
+        health: 70,
         luck: 10,
     },
     perks: [

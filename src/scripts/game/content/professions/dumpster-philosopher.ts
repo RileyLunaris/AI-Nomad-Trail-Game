@@ -5,10 +5,10 @@ export const DumpsterPhilosopher: Profession = {
     name: "Dumpster Philosopher",
     description: "Finds wisdom and random treasures in trash while pondering life's mysteries.",
     quirk: "Carries a notebook for deep thoughts about pizza boxes",
-    starting_stats: {
+    stats: {
         cash: 3_600,
-        laptop_health: 90,
-        mental_health: 70,
+        equipment: 90,
+        health: 70,
         luck: 25,
     },
     perks: [

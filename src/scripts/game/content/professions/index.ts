@@ -22,11 +22,13 @@ export const professions: Profession[] = [
     SystemsDirector,
 ];
 
-export function getProfessionById(id: string): Profession | undefined {
+export function getProfessionById(id: string): Profession {
     for ( const profession of professions ) {
         if ( profession.id === id ) {
             return profession
-}}}
+    }}
+    return ListRandomProfessions(1)[0]!;
+}
 
 export function ListRandomProfessions(amount: number = DEFAULT_AMOUNT): Profession[] {
     if ((amount <= 1) || (professions.length <= amount)) amount = DEFAULT_AMOUNT;

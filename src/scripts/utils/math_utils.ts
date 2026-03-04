@@ -1,3 +1,12 @@
+/**
+ * Restricts a value between a set of limits.
+ * 
+ * @param value value to set between limits.
+ * @param upper_bound (optional) Upper limit for the value.
+ * @param lower_bound (optional) Lower limit for the value.
+ * 
+ * @returns Value within limits.
+ */
 export function limit_value_between(
     value: number,
     upper_bound: number = 100,
@@ -9,6 +18,19 @@ export function limit_value_between(
     )
 }
 
-export function fill_width(value:number): string {
-    return `width: ${limit_value_between(value) / 100}%`;
+/**
+ * Creates styles "width:..." string for stat bars based on values.
+ * 
+ * @param value Current value.
+ * @param max Current value maximum.
+ * 
+ * @returns Formatted style width string.
+ */
+export function fill_width(
+    value: number,
+    max: number = 100,
+): string {
+    if (max === 0) { max = 100 }
+    value = limit_value_between(value, max) 
+    return `width: ${value/max}%`;
 }
