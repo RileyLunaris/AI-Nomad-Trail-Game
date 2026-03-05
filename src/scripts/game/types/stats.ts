@@ -32,7 +32,7 @@ export class StatValue {
         this.max = max;
     }
 
-    public add (value: number): StatValue {
+    public affect (value: number): StatValue {
         this.value = Math.min(
             Math.max(
                 (this.value + value), 
@@ -43,14 +43,18 @@ export class StatValue {
         return this;
     }
 
-    public upgrade (value: number): StatValue {
+    public modify (value: number): StatValue {
         this.value += value;
         this.max += value; // infinities stay infinities
         return this;
     }
 
-    public is_okay (): boolean {
-        return this.value > this.min;
+    public is_empty (): boolean {
+        return this.value <= this.min;
+    }
+
+    public is_full (): boolean {
+        return this.value >= this.max;
     }
 }
 
@@ -69,21 +73,21 @@ export class PlayerStats {
         this.distance = new StatValue(0, 0, stats.distance)
     }
 
-    public add (stats: Stats): PlayerStats {
-        if (stats.cash) { this.cash.add(stats.cash); }
-        if (stats.equipment) { this.equipment.add(stats.equipment); }
-        if (stats.health) { this.health.add(stats.health); }
-        if (stats.luck) { this.luck.add(stats.luck); }
-        if (stats.distance) { this.distance.add(stats.distance); }
+    public affect (stats: Stats): PlayerStats {
+        if (stats.cash) { this.cash.affect(stats.cash); }
+        if (stats.equipment) { this.equipment.affect(stats.equipment); }
+        if (stats.health) { this.health.affect(stats.health); }
+        if (stats.luck) { this.luck.affect(stats.luck); }
+        if (stats.distance) { this.distance.affect(stats.distance); }
         return this;
     }
 
-    public upgrade (stats: Stats): PlayerStats {
-        if (stats.cash) { this.cash.upgrade(stats.cash); }
-        if (stats.equipment) { this.equipment.upgrade(stats.equipment); }
-        if (stats.health) { this.health.upgrade(stats.health); }
-        if (stats.luck) { this.luck.upgrade(stats.luck); }
-        if (stats.distance) { this.distance.upgrade(stats.distance); }
+    public modify (stats: Stats): PlayerStats {
+        if (stats.cash) { this.cash.modify(stats.cash); }
+        if (stats.equipment) { this.equipment.modify(stats.equipment); }
+        if (stats.health) { this.health.modify(stats.health); }
+        if (stats.luck) { this.luck.modify(stats.luck); }
+        if (stats.distance) { this.distance.modify(stats.distance); }
         return this;
     }
 }
