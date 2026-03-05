@@ -175,7 +175,8 @@ async function fetchScenarioFromAI() {
             options: [
                 {
                     text: "Fix it quickly",
-                    cash: -50, laptop: 5,
+                    cash: -50, 
+                    laptop: 5,
                     mental: 0,
                     luck: -5,
                     outcome: "Patched successfully." 
@@ -217,12 +218,6 @@ function displayCurrentScenario() {
             scenario_description,
         )
     }
-
-    /* log panel */
-    // const log_panel = Object.assign(
-    //     scenario_title,
-    //     scenario_description,
-    // );
 
     if (scenarioControls) {
         scenarioControls.innerHTML = ''; 
