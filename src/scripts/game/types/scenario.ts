@@ -3,19 +3,19 @@ import type { Stats } from ".";
 export interface Scenario {
     text: string,
     description: string,
-    outcome: Outcome,
+    outcome?: Outcome,
     options: Option[],
 }
 
 export interface Option {
     id?: string,
     text: string,
-    success: string,
-    failure: string,
-    affects: Stats,
+    chance?: number,
+    success: Outcome,
+    failure: Outcome,
 }
 
 export interface Outcome {
     text: string,
-    affects: Stats,
+    effects: Stats,
 }

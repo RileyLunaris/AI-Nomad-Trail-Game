@@ -7,7 +7,7 @@ export interface Stats{
 }
 
 export interface FullStats extends Required<Stats> {}
-export function make_full_stats (stats: Stats): FullStats {
+export function makeFullStats (stats: Stats): FullStats {
     return {
         cash: stats.cash ?? 0,
         equipment: stats.equipment ?? 0,
@@ -49,12 +49,16 @@ export class StatValue {
         return this;
     }
 
-    public is_empty (): boolean {
+    public isEmpty (): boolean {
         return this.value <= this.min;
     }
 
-    public is_full (): boolean {
+    public isFull (): boolean {
         return this.value >= this.max;
+    }
+
+    public percent(): string {
+        return `${(this.value / this.max) * 100}%`
     }
 }
 

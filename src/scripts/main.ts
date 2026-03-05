@@ -1,6 +1,11 @@
 
-import { DilemmaSchema, parse_new_scenario } from "./api/generate_scenario.js";
-import { professions, ListRandomProfessions } from "./game/content/professions";
+import { ActionSchema, DilemmaSchema, OutcomeSchema, parseNewScenario } from "./api/generate_scenario.js";
+import { getProfessionById, ListRandomProfessions } from "./game/content/professions";
+import { getRandomScenario } from "./game/content/scenarios/index.js";
+import type { GameStateSummary } from "./game/types/game-state.js";
+import { Player } from "./game/types/player.js";
+import type { Option, Outcome, Scenario } from "./game/types/scenario.js";
+import type { Stats } from "./game/types/stats.js";
 import { JourneyLogView, PlayerInfoView, ScenarioView, TitleBarView } from "./ui";
 import { z } from "zod";
 
@@ -9,78 +14,39 @@ const START_CITY = "New York City, NY";
 const END_CITY = "San Francisco, CA";
 const TOTAL_DISTANCE = 3000;
 
-
-class Player {
-    profession:string;
-    distance:number;
-    cash:number;
-    laptop_health:number;
-    mental_health:number;
-    luck: number;
-    is_alive:boolean;
-    game_over_reason:string;
-
-    constructor(profession_id: string) {
-        
-        const data = professions.find(profession => profession.id === profession_id) || professions[0]!;
-        this.profession = data.name;
-        this.distance = 0;
-        this.cash = data.stats.cash!;
-        this.laptop_health = data.stats.equipment!;
-        this.mental_health = data.stats.health!;
-        this.luck = data.stats.luck!;
-        this.is_alive = true;
-        this.game_over_reason = "";
-    }
-
-    clamp(value:number, min:number, max:number) { 
-        return Math.max(min, Math.min(max, value)); 
-    }
-    applyEffect(cash:number, laptop:number, mental:number, outcomeText:string) {
-        this.cash += cash;
-        this.laptop_health = this.clamp(this.laptop_health + laptop, 0, 100);
-        this.mental_health = this.clamp(this.mental_health + mental, 0, 100);
-        const cashDisplay = cash >= 0 ? `+${cash}` : `${cash}`;
-        this.logMessage(`Outcome: ${outcomeText} (Cash: $${cashDisplay}, Laptop: ${laptop}%, Mental: ${mental}%)`, 'text-blue-600');
-        this.checkGameOver();
-    }
-    
-    checkGameOver() {
-        if (this.cash <= 0) { this.game_over_reason = "You ran out of cash."; this.is_alive = false; }
-        if (this.laptop_health <= 0) { this.game_over_reason = "Your laptop failed."; this.is_alive = false; }
-        if (this.mental_health <= 0) { this.game_over_reason = "You burned out."; this.is_alive = false; }
-        return !this.is_alive;
-    }
-
-    logMessage(text:string, colorClass:string = 'text-gray-800') {
-        const log = document.getElementById('log-area');
-        const profession = document.createElement('p');
-        profession.className = `text-sm mb-1 ${colorClass}`;
-        profession.textContent = text;
-        if (log) log.prepend(profession);
-    }
-}
-
 let player: Player;
 let isProcessing: boolean = false;
-interface ScenarioOption {
-    id?: string
-    text: string;
-    cash: number;
-    laptop: number;
-    mental: number;
-    luck: number;
-    outcome: string;
-}
-interface Scenario {
-    text: string;
-    description: string;
-    options: ScenarioOption[];
-}
 let currentScenario: Scenario; 
 
+// Functions
+function effectMessage (effects: Stats) {
+    let output: string[] = [];
+    if (effects.cash)      { output.push(`cash: ${effects.cash}`); }
+    if (effects.equipment) { output.push(`laptop: ${effects.equipment}`); }
+    if (effects.health)    { output.push(`mental: ${effects.health}`); }
+    if (effects.distance)  { output.push(`traveled: ${effects.distance} miles`); }
+    
+    if (output.length > 2) 
+        { return `Effects: ${output.slice(0, -1).join(", ")}, and ${output[-1]}.` }
+    else if (output.length === 2) 
+        { return `Effects: ${output.join(" and ")}.` }
+    else 
+        { return `Effect: ${output[0]}.`}
+}
+function logMessage (
+    text: string, 
+    colorClass: string = 'text-gray-800'
+) {
+    const log = document.getElementById('log-area');
+    const event = Object.assign(
+        document.createElement('p'), {
+            className: `text-sm mb-1 ${colorClass}`,
+            textContent: text,
+    });
+    if (log) { log.prepend(event); }
+}
 function rollForTravel() {
-    if (isProcessing || !player.is_alive) return;
+    if (isProcessing || !player.isAlive()) return;
     isProcessing = true;
     
     const scenarioDisplay = document.getElementById('scenario-display');
@@ -94,103 +60,80 @@ function rollForTravel() {
     if (scenarioDisplay) scenarioDisplay.appendChild(scenario_display_text); 
     if (scenarioControls) scenarioControls.innerHTML = ''; 
     
-    const distanceTraveled = Math.floor(Math.random() * 300) + 100;
+    const distance = Math.floor(Math.random() * 300) + 100;
     const cost = Math.floor(Math.random() * 150) + 50;
-    player.distance += distanceTraveled;
-    player.applyEffect(-cost, -2, -5, `Traveled ${distanceTraveled} miles.`);
+    const damage = Math.floor(Math.random() * 5);
+    const health = Math.floor(Math.random() * 7);
+    player.affect({
+        cash: -cost,
+        equipment: -damage,
+        health: -health,
+        distance: +distance,
+    })
+    logMessage(`Traveled ${distance} miles.`)
     updateUI();
     
-    if (player.is_alive && player.distance < TOTAL_DISTANCE) {
+    if (player.isAlive() && !player.hasReachedGoal()) {
         fetchScenarioFromAI();
     } else {
         updateUI(); 
     }
 }
-
-function mapDilemma(schemaData: z.infer<typeof DilemmaSchema>): Scenario {
+function mapOutcome (schema: z.infer<typeof OutcomeSchema>): Outcome {
     return {
-        text: schemaData.title,
-        description: schemaData.description,
-        options: schemaData.options.map((opt) => {
-        // combine multiple player_affects into single object
-        const affects = opt.player_affects.reduce(
-            (acc, pa) => ({
-                cash: acc.cash + pa.money,
-                laptop: acc.laptop + pa.damage,
-                mental: acc.mental + pa.health,
-                luck: acc.luck + pa.luck
-            }),
-            {   cash: 0,
-                laptop: 0,
-                mental: 0,
-                luck: 0
-            }
-        );
-
-            return {
-                text: opt.text,
-                cash: affects.cash,
-                laptop: affects.laptop,
-                mental: affects.mental,
-                luck: affects.luck,
-                outcome: opt.outcome
-            };
-        })
+        text: schema.text,
+        effects: {
+            cash: -schema.cost,
+            equipment: -schema.damage,
+            health: -schema.health,
+            luck: +schema.luck,
+        }
+    }
+}
+function mapOption (schema: z.infer<typeof ActionSchema>): Option {
+    return {
+        text: schema.text,
+        chance: schema.chance,
+        success: mapOutcome(schema.success),
+        failure: mapOutcome(schema.failure),
+    }
+}
+function mapScenario (schema: z.infer<typeof DilemmaSchema>): Scenario {
+    return {
+        text: schema.title,
+        description: schema.description,
+        options: schema.options.map(mapOption)
     };
 }
 
-
+function getCurrentStateSummary (): GameStateSummary {
+    if (!currentScenario) {
+        return {
+            scenario: "new game",
+            attempt: "started game",
+            profession: player.profession.name,
+        }
+    } else {
+        return {
+            scenario: currentScenario.description ?? "",
+            attempt: currentScenario.outcome!.text,
+            profession: player.profession.name,
+        }
+    }
+}
 async function fetchScenarioFromAI() {
     isProcessing = true;
     try {
-        const current_state = {
-            last_scenario: {
-                title: "Man charged with arson for burning down webpage.",
-                action: "spray computer with fire extinguiser",
-            },
-            locations: {
-                target: END_CITY,
-                origin: START_CITY,
-            },
-            player: {
-                profession: player.profession,
-                stats: {
-                    cash: player.cash,
-                    equipment: player.laptop_health,
-                    health: player.mental_health,
-                    luck: 50,
-                }
-            }
-        }
-        const scenario = await parse_new_scenario(current_state);
-        currentScenario = mapDilemma(scenario);
-        
-    } catch (error: unknown) {
+        logMessage("Fetching new scenario...")
+        const scenario = await parseNewScenario(getCurrentStateSummary());
+        currentScenario = mapScenario(scenario);
+    } 
+    catch (error: unknown) {
         if (error instanceof z.ZodError || error instanceof Error) {
-            player.logMessage(`AI Error: ${error.message}. Using fallback.`, 'text-red-600');
+            logMessage(`Using fallback.`, 'text-red-600');
+            logMessage(`AI Error: ${error.message}. ${error.stack}.`)
         }
-        currentScenario = {
-            text: "A technical glitch occurred.",
-            description: "You must troubleshoot now.",
-            options: [
-                {
-                    text: "Fix it quickly",
-                    cash: -50, 
-                    laptop: 5,
-                    mental: 0,
-                    luck: -5,
-                    outcome: "Patched successfully." 
-                },
-                { 
-                    text: "Ignore and rest", 
-                    cash: 0, 
-                    laptop: -10, 
-                    mental: 10, 
-                    luck: 10,
-                    outcome: "Feeling refreshed but buggy."
-                }
-            ]
-        };
+        currentScenario = getRandomScenario();
     }
     displayCurrentScenario();
     isProcessing = false;
@@ -239,15 +182,22 @@ function displayCurrentScenario() {
 }
 
 function handleScenarioChoice(choiceIndex:number) {
-    const choice = currentScenario.options[choiceIndex];
-    if (choice) {
-        player.applyEffect(
-            choice.cash || 0,
-            choice.laptop || 0,
-            choice.mental || 0,
-            choice.outcome || "Action taken."
-        );
-    }
+    const choice: Option | undefined = currentScenario.options[choiceIndex];
+    if (!choice) { return; }
+    
+    const roll = Math.random()*100;
+    const chance = choice.chance ?? 50;
+    const success = roll < chance;
+    console.log(`Rolled: ${roll}, against ${chance} : result: ${success}`)
+
+
+    if (success) { currentScenario.outcome = choice.success; }
+    else { currentScenario.outcome = choice.failure; }
+    
+    player.affect(currentScenario.outcome.effects)
+    logMessage(currentScenario.outcome.text)
+    logMessage(effectMessage(currentScenario.outcome.effects))
+
     const travelButton = document.getElementById('travel-button') as HTMLButtonElement;
     if (travelButton) {
         travelButton.disabled = false;
@@ -261,29 +211,29 @@ function handleScenarioChoice(choiceIndex:number) {
 
 function updateUI() {
     const cash_value = document.getElementById('cash-value')
-    if (cash_value) {cash_value.textContent = `$${player.cash}`;}
+    if (cash_value) {cash_value.textContent = `$${player.stats.cash.value}`;}
     const laptop_fill = document.getElementById('laptop-fill')
-    if (laptop_fill) {laptop_fill.style.width = `${player.laptop_health}%`;}
+    if (laptop_fill) {laptop_fill.style.width = `${player.stats.equipment.value}%`;}
     const laptop_label = document.getElementById('laptop-label')
-    if (laptop_label) {laptop_label.textContent = `${player.laptop_health}%`;}
+    if (laptop_label) {laptop_label.textContent = `${player.stats.equipment.value}%`;}
     const mental_fill = document.getElementById('mental-fill')
-    if (mental_fill) {mental_fill.style.width = `${player.mental_health}%`;}
+    if (mental_fill) {mental_fill.style.width = `${player.stats.health.value}%`;}
     const mental_label = document.getElementById('mental-label')
-    if (mental_label) {mental_label.textContent = `${player.mental_health}%`;}
-    const progress = Math.min(1, (player.distance / TOTAL_DISTANCE)) * 100;
+    if (mental_label) {mental_label.textContent = `${player.stats.health.value}%`;}
+    const progress = Math.min(1, (player.stats.distance.value / TOTAL_DISTANCE)) * 100;
     const progress_fill = document.getElementById('progress-fill')
     if (progress_fill) {progress_fill.style.width = `${progress}%`;}
     const distance_value = document.getElementById('distance-value')
-    if (distance_value) {distance_value.textContent = `${player.distance} / ${TOTAL_DISTANCE} miles`;}
+    if (distance_value) {distance_value.textContent = `${player.stats.distance.value} / ${TOTAL_DISTANCE} miles`;}
     
     const player_profession_title = Object.assign(document.createElement('div'), {
             className: "font-bold text-2xl text-indigo-700", 
-            textContent: `${player.profession}`, 
+            textContent: `${player.profession.name}`, 
     });
     const status_info = document.getElementById('status-info')
     if (status_info) {status_info.replaceChildren(player_profession_title);}
-    if (player.distance >= TOTAL_DISTANCE && player.is_alive) {endGame(true);}
-    else if (!player.is_alive) {endGame(false);}
+    if (player.hasReachedGoal() && player.isAlive()) {endGame(true);}
+    else if (!player.isAlive()) {endGame(false);}
 }
 
 function endGame(isWin:boolean) {
@@ -356,9 +306,9 @@ function initializeGameLayout() {
 }
 
 function startInteractionLoop(profession_id:string) {
-    player = new Player(profession_id);
+    player = new Player(getProfessionById(profession_id), TOTAL_DISTANCE);
     updateUI(); 
-    player.logMessage(`You chose: ${player.profession}. Starting with $${player.cash}, ${player.laptop_health}% Laptop, and ${player.mental_health}% Mental Health.`, 'text-green-600 font-bold');
+    logMessage(`You chose: ${player.profession.name}. Starting with $${player.stats.cash.value}, ${player.stats.equipment.value}% Laptop, and ${player.stats.health.value}% Mental Health.`, 'text-green-600 font-bold');
     fetchScenarioFromAI();
 }
 

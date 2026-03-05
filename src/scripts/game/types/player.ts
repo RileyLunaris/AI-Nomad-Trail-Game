@@ -1,30 +1,30 @@
-import { make_full_stats, PlayerStats, type Profession, type Stats } from ".";
+import { makeFullStats, PlayerStats, type Profession, type Stats } from ".";
 
 export class Player {
-    protected profession: Profession;
-    protected stats: PlayerStats;
+    public profession: Profession;
+    public stats: PlayerStats;
 
     constructor(
         profession: Profession,
         goal_distance: number,
     ) {
         this.profession = profession;
-        const starting_stats = make_full_stats(profession.stats);
+        const starting_stats = makeFullStats(profession.stats);
         starting_stats.distance = goal_distance;
         this.stats = new PlayerStats (starting_stats);
     }
 
-    public is_alive(): boolean {
-        return (
-            this.stats.cash.is_empty() ||
-            this.stats.equipment.is_empty() ||
-            this.stats.health.is_empty() 
+    public isAlive(): boolean {
+        return !(
+            this.stats.cash.isEmpty() ||
+            this.stats.equipment.isEmpty() ||
+            this.stats.health.isEmpty() 
         )
     }
     
-    public has_reached_goal (): boolean {
+    public hasReachedGoal (): boolean {
         return (
-            this.stats.distance.is_full()
+            this.stats.distance.isFull()
         )
     }
     public affect (effect: Stats): Player {
@@ -37,12 +37,12 @@ export class Player {
         return this;
     }
 
-    public get_loss_message(): string {
+    public getLossMessage(): string {
         const reasons: string[] = new Array<string>;
 
-        if (this.stats.cash.is_empty())      { reasons.push("you ran out of money") }
-        if (this.stats.equipment.is_empty()) { reasons.push("you broke your equipment")}
-        if (this.stats.health.is_empty())    { reasons.push("you burnt out")}
+        if (this.stats.cash.isEmpty())      { reasons.push("you ran out of money") }
+        if (this.stats.equipment.isEmpty()) { reasons.push("you broke your equipment")}
+        if (this.stats.health.isEmpty())    { reasons.push("you burnt out")}
         
         if (reasons.length > 2) { 
             return `${reasons.slice(0, -1).join(", ")}, and ${reasons[-1]}`;
@@ -55,5 +55,3 @@ export class Player {
         }
     }
 }
-
-

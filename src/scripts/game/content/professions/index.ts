@@ -1,4 +1,4 @@
-import { shuffle_array } from "../../../utils";
+import { shuffleArray } from "../../../utils";
 import type { Profession } from "../../types"
 
 import { Author } from "./author";
@@ -32,5 +32,5 @@ export function getProfessionById(id: string): Profession {
 
 export function ListRandomProfessions(amount: number = DEFAULT_AMOUNT): Profession[] {
     if ((amount <= 1) || (professions.length <= amount)) amount = DEFAULT_AMOUNT;
-    return shuffle_array(professions).slice(0, amount);
+    return shuffleArray(professions).slice(0, amount);
 }

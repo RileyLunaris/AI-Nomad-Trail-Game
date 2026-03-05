@@ -1,4 +1,4 @@
-export function shuffle_array<T>(list: T[]): T[] {
+export function shuffleArray<T>(list: T[]): T[] {
     // Make a shallow copy so we don't mutate the original
     const array = list.slice();
 
