@@ -20,7 +20,7 @@ let currentScenario: Scenario;
 
 
 // UI Functions
-function initializeGameLayout() {
+function uiInitialize () {
     const gameArea = document.getElementById('app');
     const game = Object.assign(
         document.createElement('div'), {
@@ -47,7 +47,7 @@ function initializeGameLayout() {
     const options_panel_continue = Object.assign(
         document.createElement('button'), {
             id: "travel-button",
-            onclick: rollForTravel,
+            onclick: gameRollTravel,
             style: "background-color: #9ca3af; cursor: not-allowed; opacity: 0.7;",
             className: "w-full px-4 py-3 mt-4 text-white font-bold rounded-lg",
             textContent: "Continue Journey (Travel & Risk New Event)", 
@@ -67,7 +67,7 @@ function initializeGameLayout() {
     );
     if (gameArea) {gameArea.appendChild(game);}
 }
-function showProfessionSelection() {
+function uiProfessionMenu () {
     const scenarioDisplay = document.getElementById('scenario-display');
     const scenarioControls = document.getElementById('scenario-controls');
     // const logArea = document.getElementById('log-area');
@@ -129,7 +129,7 @@ function showProfessionSelection() {
             button.className = 'w-full mt-2 px-4 py-2 bg-indigo-500 text-white font-semibold rounded-lg hover:bg-indigo-600 transition-colors shadow-lg';
             button.onclick = () => {
                 if (travelButton) travelButton.style.display = 'block';
-                startInteractionLoop(profession.id);
+                gameInitialize(profession.id);
             };
             const option_stats_list = [
                 option_cash,
@@ -154,7 +154,7 @@ function showProfessionSelection() {
         });
     }
 }
-function displayCurrentScenario() {
+function uiScenario () {
     if (!currentScenario) return; 
     const scenarioDisplay = document.getElementById('scenario-display');
     const scenarioControls = document.getElementById('scenario-controls');
@@ -184,7 +184,7 @@ function displayCurrentScenario() {
             const button = document.createElement('button');
             button.textContent = option.text;
             button.className = 'w-full px-4 py-2 mb-3 bg-indigo-500 text-white rounded-lg hover:bg-indigo-600 shadow-md';
-            button.onclick = () => handleScenarioChoice(index);
+            button.onclick = () => gameScenarioChoice(index);
             scenarioControls.appendChild(button);
         });
     }
@@ -193,9 +193,9 @@ function displayCurrentScenario() {
         travelButton.disabled = true;
         travelButton.style.opacity = '0.5';
     }
-    updateUI();
+    uiUpdate();
 }
-function updateUI() {
+function uiUpdate () {
     const cash_value = document.getElementById('cash-value')
     if (cash_value) {cash_value.textContent = `$${player.stats.cash.value}`;}
     const laptop_fill = document.getElementById('laptop-fill')
@@ -218,10 +218,10 @@ function updateUI() {
     });
     const status_info = document.getElementById('status-info')
     if (status_info) {status_info.replaceChildren(player_profession_title);}
-    if (player.hasReachedGoal() && player.isAlive()) {endGame(true);}
-    else if (!player.isAlive()) {endGame(false);}
+    if (player.hasReachedGoal() && player.isAlive()) {uiEndGame(true);}
+    else if (!player.isAlive()) {uiEndGame(false);}
 }
-function logPushMessage (
+function uiLogMessage (
     text: string, 
     colorClass: string = 'text-gray-800'
 ) {
@@ -233,11 +233,11 @@ function logPushMessage (
     });
     if (log) { log.prepend(event); }
 }
-function logPopMessage () {
+function uiPopMessage () {
     const log = document.getElementById("log-area") as HTMLDivElement;
     if (log) { log.firstElementChild?.remove() }
 }
-function endGame(isWin:boolean) {
+function uiEndGame (isWin:boolean) {
     const title = isWin ? "CONGRATULATIONS!" : "GAME OVER.";
     const header = Object.assign(
         document.createElement('h2'), {
@@ -279,6 +279,7 @@ function uiTravelButtonDisplay () {
     if (scenario_controls) {scenario_controls.innerHTML = '';}
 }
 
+
 // Mapping Schema
 function mapOutcome (schema: z.infer<typeof OutcomeSchema>): Outcome {
     return {
@@ -309,39 +310,60 @@ function mapScenario (schema: z.infer<typeof DilemmaSchema>): Scenario {
 
 
 // Game Functions
-function startInteractionLoop(profession_id:string) {
+function gameInitialize(profession_id:string) {
     player = new Player(getProfessionById(profession_id), TOTAL_DISTANCE);
-    updateUI(); 
-    logPushMessage(`You chose: ${player.profession.name}. Starting with $${player.stats.cash.value}, ${player.stats.equipment.value}% Laptop, and ${player.stats.health.value}% Mental Health.`, 'text-green-600 font-bold');
-    fetchScenarioFromAI();
+    uiUpdate(); 
+    uiLogMessage(`You chose: ${player.profession.name}. Starting with $${player.stats.cash.value}, ${player.stats.equipment.value}% Laptop, and ${player.stats.health.value}% Mental Health.`, 'text-green-600 font-bold');
+    gameFetchScenario();
 }
-function rollForSuccess (
+function gameRollSuccess (
     chance: number = 50,
     luck: number = 0,
 ): boolean {
     return ((Math.random() * 100) <= (chance + luck))
 }
-function rollForStat (
+function gameRollStat (
     range: number,
     offset: number = 0,
 ): number {
     return Math.floor((Math.random() * range) + offset)
 }
-function handleScenarioChoice(choiceIndex:number) {
+function gameRollTravel () {
+    if (isProcessing || !player.isAlive()) return;
+    isProcessing = true;
+
+    uiTravel()
+    const effect: Stats = {
+        cash: -gameRollStat(150, 50),
+        equipment: -gameRollStat(5),
+        health: -gameRollStat(7),
+        distance: gameRollStat(300, 100),
+    }
+
+    player.affect(effect)
+    uiLogMessage(`Traveled ${effect.distance} miles.`)
+
+    if (player.isAlive() && !player.hasReachedGoal()) {
+        gameFetchScenario();
+    } else {
+        uiUpdate(); 
+    }
+}
+function gameScenarioChoice (choiceIndex:number) {
     const choice: Option | undefined = currentScenario.options[choiceIndex];
     if (!choice) { return; }
     
-    if (rollForSuccess(choice.chance, player.stats.luck.value)) { currentScenario.outcome = choice.success; }
+    if (gameRollSuccess(choice.chance, player.stats.luck.value)) { currentScenario.outcome = choice.success; }
     else { currentScenario.outcome = choice.failure; }
     
     player.affect(currentScenario.outcome.effects);
-    logPushMessage(currentScenario.outcome.text);
-    logPushMessage(effectMessage(currentScenario.outcome.effects));
+    uiLogMessage(currentScenario.outcome.text);
+    uiLogMessage(gameEffectMessage(currentScenario.outcome.effects));
 
     uiTravelButtonDisplay();
-    updateUI();
+    uiUpdate();
 }
-function getCurrentStateSummary (): GameStateSummary {
+function gameCurrentStateSummary (): GameStateSummary {
     if (!currentScenario) {
         return {
             scenario: "new game",
@@ -356,25 +378,25 @@ function getCurrentStateSummary (): GameStateSummary {
         }
     }
 }
-async function fetchScenarioFromAI() {
+async function gameFetchScenario () {
     isProcessing = true;
     try {
-        logPushMessage("Fetching new scenario...")
-        const scenario = await parseNewScenario(getCurrentStateSummary());
+        uiLogMessage("Fetching new scenario...")
+        const scenario = await parseNewScenario(gameCurrentStateSummary());
         currentScenario = mapScenario(scenario);
-        logPopMessage();
+        uiPopMessage();
     } 
     catch (error: unknown) {console.log
         if (error instanceof z.ZodError || error instanceof Error) {
-            logPushMessage(`Using fallback.`, 'text-red-600');
-            logPushMessage(`AI Error: ${error.message}. ${error.stack}.`)
+            uiLogMessage(`Using fallback.`, 'text-red-600');
+            uiLogMessage(`AI Error: ${error.message}. ${error.stack}.`)
         }
         currentScenario = getRandomScenario();
     }
-    displayCurrentScenario();
+    uiScenario();
     isProcessing = false;
 }
-function effectMessage (effects: Stats) {
+function gameEffectMessage (effects: Stats) {
     let output: string[] = [];
     if (effects.cash)      { output.push(`cash: ${effects.cash}`); }
     if (effects.equipment) { output.push(`laptop: ${effects.equipment}`); }
@@ -388,29 +410,8 @@ function effectMessage (effects: Stats) {
     else 
         { return `Effect: ${output[0]}.`}
 }
-function rollForTravel() {
-    if (isProcessing || !player.isAlive()) return;
-    isProcessing = true;
-
-    uiTravel()
-    const effect: Stats = {
-        cash: -rollForStat(150, 50),
-        equipment: -rollForStat(5),
-        health: -rollForStat(7),
-        distance: rollForStat(300, 100),
-    }
-
-    player.affect(effect)
-    logPushMessage(`Traveled ${effect.distance} miles.`)
-
-    if (player.isAlive() && !player.hasReachedGoal()) {
-        fetchScenarioFromAI();
-    } else {
-        updateUI(); 
-    }
-}
 
 
 // Initialize game
-initializeGameLayout();
-showProfessionSelection();
+uiInitialize();
+uiProfessionMenu();
