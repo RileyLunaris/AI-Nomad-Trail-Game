@@ -2,9 +2,6 @@ import { GenerateContentResponse, GoogleGenAI } from "@google/genai";
 import { z } from "zod";
 import { zodToJsonSchema } from "zod-to-json-schema";
 
-import type { GameStateSummary } from "../game/types";
-
-
 /* Constants */
 const apikey = import.meta.env.VITE_GEMINI_API_KEY!;
 const ai = new GoogleGenAI({ apiKey: apikey });
@@ -33,10 +30,10 @@ export const DilemmaSchema = z.object({
 
 
 /* Functions */
-function makePrompt(state: GameStateSummary) {
+function makePrompt(summary: string) {
     return `
 Current_Game_State:
-${JSON.stringify(state, null, 2)}
+${summary}
 
 Based on the Current_Game_State, generate a new funny or satirical dilemma for the player to solve.
 The dilemma location be somewhere between the origin and the target.
@@ -69,8 +66,8 @@ async function fetch(request:string) {
     return response;
 }
 
-export async function parseNewScenario(state: GameStateSummary) {
-    const data = parseJson(await fetch(makePrompt(state)));
+export async function parseNewScenario(summary: string) {
+    const data = parseJson(await fetch(makePrompt(summary)));
     console.log(data);
     return DilemmaSchema.parseAsync(data);
 }

@@ -1,6 +1,6 @@
-import type { Scenario } from "../../types";
+import type { ScenarioData } from "../../types";
 
-export const TECHNICAL_GLITCH: Scenario = {
+export const TECHNICAL_GLITCH: ScenarioData = {
     text: "A technical glitch occurred.",
     description: "You must troubleshoot now.",
     options: [

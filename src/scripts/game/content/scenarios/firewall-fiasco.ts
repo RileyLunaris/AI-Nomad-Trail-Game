@@ -1,6 +1,6 @@
-import type { Scenario } from "../../types";
+import type { ScenarioData } from "../../types";
 
-export const FIREWALL_FIASCO: Scenario = {
+export const FIREWALL_FIASCO: ScenarioData = {
     text: "Firewall Fiasco",
     description: "You realize that you've been browsing the web at your local coffee shop and your firewall was disabled. In an attempt to bring it back, your cause your webpage to catch fire.",
     options: [

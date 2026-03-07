@@ -1,11 +1,8 @@
-
 import { ActionSchema, DilemmaSchema, OutcomeSchema, parseNewScenario } from "./api/generate_scenario.js";
 import { getProfessionById, ListRandomProfessions } from "./game/content/professions";
 import { getRandomScenario } from "./game/content/scenarios/index.js";
-import type { GameStateSummary } from "./game/types/game-state.js";
 import { Player } from "./game/types/player.js";
-import type { Option, Outcome, Scenario } from "./game/types/scenario.js";
-import type { Stats } from "./game/types/stats.js";
+import { Option, Outcome, Scenario, type Stats } from "./game/types/";
 import { JourneyLogView, PlayerInfoView, ScenarioView, TitleBarView } from "./ui";
 import { z } from "zod";
 
@@ -16,7 +13,8 @@ const TOTAL_DISTANCE = 3000;
 
 let player: Player;
 let isProcessing: boolean = false;
-let currentScenario: Scenario; 
+let currentScenario: Scenario = new Scenario(); 
+console.log(currentScenario)
 
 
 // UI Functions
@@ -282,30 +280,36 @@ function uiTravelButtonDisplay () {
 
 // Mapping Schema
 function mapOutcome (schema: z.infer<typeof OutcomeSchema>): Outcome {
-    return {
-        text: schema.text,
-        effects: {
+    return new Outcome(
+        schema.text,
+        {
             cash: -schema.cost,
             equipment: -schema.damage,
             health: -schema.health,
             luck: +schema.luck,
         }
-    }
+    )
 }
-function mapOption (schema: z.infer<typeof ActionSchema>): Option {
-    return {
-        text: schema.text,
-        chance: schema.chance,
-        success: mapOutcome(schema.success),
-        failure: mapOutcome(schema.failure),
+function mapOptions (schema: z.infer<typeof ActionSchema>[]): Option[] {
+    let options = []
+    for (const option of schema) {
+        options.push(
+            new Option(
+                option.text,
+                mapOutcome(option.success),
+                mapOutcome(option.failure),
+                option.chance,
+            )
+        )
     }
+    return options
 }
 function mapScenario (schema: z.infer<typeof DilemmaSchema>): Scenario {
-    return {
-        text: schema.title,
-        description: schema.description,
-        options: schema.options.map(mapOption)
-    };
+    return new Scenario(
+        schema.title,
+        schema.description,
+        mapOptions(schema.options)
+    );
 }
 
 
@@ -315,12 +319,6 @@ function gameInitialize(profession_id:string) {
     uiUpdate(); 
     uiLogMessage(`You chose: ${player.profession.name}. Starting with $${player.stats.cash.value}, ${player.stats.equipment.value}% Laptop, and ${player.stats.health.value}% Mental Health.`, 'text-green-600 font-bold');
     gameFetchScenario();
-}
-function gameRollSuccess (
-    chance: number = 50,
-    luck: number = 0,
-): boolean {
-    return ((Math.random() * 100) <= (chance + luck))
 }
 function gameRollStat (
     range: number,
@@ -350,40 +348,22 @@ function gameRollTravel () {
     }
 }
 function gameScenarioChoice (choiceIndex:number) {
-    const choice: Option | undefined = currentScenario.options[choiceIndex];
-    if (!choice) { return; }
-    
-    if (gameRollSuccess(choice.chance, player.stats.luck.value)) { currentScenario.outcome = choice.success; }
-    else { currentScenario.outcome = choice.failure; }
-    
-    player.affect(currentScenario.outcome.effects);
-    uiLogMessage(currentScenario.outcome.text);
-    uiLogMessage(gameEffectMessage(currentScenario.outcome.effects));
+    currentScenario.choose(choiceIndex)
+    player.affect(currentScenario.outcome!.effects);
 
+    uiLogMessage(currentScenario.outcome!.text);
+    uiLogMessage(gameEffectMessage(currentScenario.outcome!.effects));
     uiTravelButtonDisplay();
     uiUpdate();
 }
-function gameCurrentStateSummary (): GameStateSummary {
-    if (!currentScenario) {
-        return {
-            scenario: "new game",
-            attempt: "started game",
-            profession: player.profession.name,
-        }
-    } else {
-        return {
-            scenario: currentScenario.description ?? "",
-            attempt: currentScenario.outcome!.text,
-            profession: player.profession.name,
-        }
-    }
-}
 async function gameFetchScenario () {
     isProcessing = true;
+    uiLogMessage("Fetching new scenario...")
+
     try {
-        uiLogMessage("Fetching new scenario...")
-        const scenario = await parseNewScenario(gameCurrentStateSummary());
-        currentScenario = mapScenario(scenario);
+        const scenarioSchema = await parseNewScenario(currentScenario.summary());
+        const scenario = mapScenario(scenarioSchema)
+        currentScenario = scenario;
         uiPopMessage();
     } 
     catch (error: unknown) {console.log

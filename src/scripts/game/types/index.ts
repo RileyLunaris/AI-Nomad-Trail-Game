@@ -4,3 +4,5 @@ export * from "./player";
 export * from "./formatter";
 export * from "./scenario";
 export * from "./game-state";
+export * from "./options";
+export * from "./outcome";
