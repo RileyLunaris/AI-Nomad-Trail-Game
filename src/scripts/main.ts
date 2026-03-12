@@ -18,7 +18,9 @@ console.log(currentScenario)
 
 
 // UI Functions
-function uiInitialize () {
+function uiInitialize (
+    travel_action: CallableFunction,
+) {
     const gameArea = document.getElementById('app');
     const game = Object.assign(
         document.createElement('div'), {
@@ -45,7 +47,7 @@ function uiInitialize () {
     const options_panel_continue = Object.assign(
         document.createElement('button'), {
             id: "travel-button",
-            onclick: gameRollTravel,
+            onclick: travel_action,
             style: "background-color: #9ca3af; cursor: not-allowed; opacity: 0.7;",
             className: "w-full px-4 py-3 mt-4 text-white font-bold rounded-lg",
             textContent: "Continue Journey (Travel & Risk New Event)", 
@@ -65,7 +67,9 @@ function uiInitialize () {
     );
     if (gameArea) {gameArea.appendChild(game);}
 }
-function uiProfessionMenu () {
+function uiProfessionMenu (
+    choose_profession_action: CallableFunction,
+) {
     const scenarioDisplay = document.getElementById('scenario-display');
     const scenarioControls = document.getElementById('scenario-controls');
     // const logArea = document.getElementById('log-area');
@@ -127,7 +131,7 @@ function uiProfessionMenu () {
             button.className = 'w-full mt-2 px-4 py-2 bg-indigo-500 text-white font-semibold rounded-lg hover:bg-indigo-600 transition-colors shadow-lg';
             button.onclick = () => {
                 if (travelButton) travelButton.style.display = 'block';
-                gameInitialize(profession.id);
+                choose_profession_action(profession.id);
             };
             const option_stats_list = [
                 option_cash,
@@ -152,7 +156,9 @@ function uiProfessionMenu () {
         });
     }
 }
-function uiScenario () {
+function uiScenario (
+    confirm_travel_action: CallableFunction,
+) {
     if (!currentScenario) return; 
     const scenarioDisplay = document.getElementById('scenario-display');
     const scenarioControls = document.getElementById('scenario-controls');
@@ -182,7 +188,7 @@ function uiScenario () {
             const button = document.createElement('button');
             button.textContent = option.text;
             button.className = 'w-full px-4 py-2 mb-3 bg-indigo-500 text-white rounded-lg hover:bg-indigo-600 shadow-md';
-            button.onclick = () => gameScenarioChoice(index);
+            button.onclick = () => confirm_travel_action(index);
             scenarioControls.appendChild(button);
         });
     }
@@ -373,7 +379,7 @@ async function gameFetchScenario () {
         }
         currentScenario = getRandomScenario();
     }
-    uiScenario();
+    uiScenario(gameScenarioChoice);
     isProcessing = false;
 }
 function gameEffectMessage (effects: Stats) {
@@ -393,5 +399,5 @@ function gameEffectMessage (effects: Stats) {
 
 
 // Initialize game
-uiInitialize();
-uiProfessionMenu();
+uiInitialize(gameRollTravel);
+uiProfessionMenu(gameInitialize);
