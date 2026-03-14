@@ -33,8 +33,16 @@ export class JourneyLogView extends Component {
         this.header.textContent = label;
     }
 
-    public set_value(event:string) {
+    public set_value (text: string) {
+        this.output.textContent = text
+    }
+    
+    public pushEvent (event: HTMLElement) {
         this.output.prepend(event);
+    }
+
+    public popEvent() {
+        this.output.firstElementChild?.remove();
     }
 
     public clear() {

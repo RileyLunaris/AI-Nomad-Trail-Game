@@ -1,8 +1,8 @@
 export abstract class Component {
     protected root: HTMLElement;
 
-    constructor(root:HTMLElement) {
-        this.root = root;
+    constructor(root?:HTMLElement) {
+        this.root = root ? root : document.createElement("div");
         this.root.style.display = "block";
     }
 

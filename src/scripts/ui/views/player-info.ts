@@ -1,3 +1,4 @@
+import type { Player } from "../../game/types";
 import { Component } from "../components/component";
 import { StatBar, Stat, Info, ProgressBar } from "../components/player";
 
@@ -10,7 +11,7 @@ export class PlayerInfoView extends Component {
     
     constructor() {
         // Root Element Declaration
-        super(document.createElement("div"));
+        super();
 
         // Owned Components
         this.root.id = "player-panel";
@@ -37,4 +38,12 @@ export class PlayerInfoView extends Component {
             this.health.element(),
         );
     }
+    set_value (player: Player, distance: number) {
+        this.about.set_value(player.profession.name)
+        this.money.set_value(player.stats.cash.value)
+        this.equipment.set_value(player.stats.equipment.value)
+        this.health.set_value(player.stats.health.value)
+        this.progress.set_value(player.stats.distance.value, distance, "miles")
+    }
+    clear () {}
 }
