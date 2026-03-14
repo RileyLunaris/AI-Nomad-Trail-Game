@@ -2,9 +2,12 @@ import { ActionSchema, DilemmaSchema, OutcomeSchema, parseNewScenario } from "./
 import { getProfessionById, ListRandomProfessions } from "./game/content/professions";
 import { getRandomScenario } from "./game/content/scenarios/index.js";
 import { Player } from "./game/types/player.js";
-import { Option, Outcome, Scenario, type Stats } from "./game/types/";
+import { Option, Outcome, PlayerStats, Scenario, type Profession, type Stats } from "./game/types/";
 import { JourneyLogView, PlayerInfoView, ScenarioView, TitleBarView } from "./ui";
 import { z } from "zod";
+import { OptionsView } from "./ui/views/options-view.js";
+import { ProfessionCardComponent } from "./ui/components/options/profession-option.js";
+import { OptionButtonComponent } from "./ui/components/options/option.js";
 
 // Game Configuration
 const START_CITY = "New York City, NY";
@@ -17,7 +20,238 @@ let currentScenario: Scenario = new Scenario();
 console.log(currentScenario)
 
 
-// UI Functions
+// #region :: Events 
+// ────────────────────────────────────────────────────────────────────
+//                              Events
+// ────────────────────────────────────────────────────────────────────
+
+/** Events posted by the game. */
+export const GameEvents = {
+    start: "game :: start",
+    player_change: "game :: player change",
+    scenario_change: "game :: scenario change",
+    end: "game :: end",
+}
+
+/** Events posted by the UI and player decisions. */
+export const UIEvents = {
+    profession_choice: "user :: chose profession",
+    scenario_choice: "user :: chose scenario option",
+    end: "user :: end",
+}
+
+/** Combines the all events into a structured stringed typed */
+export type EventName = 
+    | typeof GameEvents[keyof typeof GameEvents]
+    | typeof UIEvents[keyof typeof UIEvents]
+
+/** Default structure for Event Handlers and optional data. */
+export type EventHandler <T = any> = (data: T) => void
+
+/**
+ * Generic event bus.
+ * 
+ * Provides decoupling between the application and the interface without
+ * directly referencing eachother.
+ * 
+ * Components can:
+ *  - subcribe to events.
+ *  - broadcast events.
+ */
+class EventBus {
+    /** Dictionary of event names with the proper handlers. */
+    private notifications: Partial <Record <EventName, EventHandler[]>> = {}
+
+    /**
+     * Subscribe to an event.
+     * 
+     * @param event - The event flag to listen for.
+     * @param handler - Funtion that will run when the event is broadcast
+     */
+    subscribe (
+        event: EventName,
+        handler: EventHandler,
+    ) {
+        if (!this.notifications[event]) { this.notifications[event] = []}
+        this.notifications[event].push(handler)
+    }
+    
+    /**
+     * Broadcasts an event to all subscribed handlers.
+     * 
+     * @param event - The event flag to braodcast for an event.
+     * @param data - Optional: data that is passesd to the handlers.
+     */
+    broadcast <T> (
+        event: EventName,
+        data?: T,
+    ) {
+        if (!this.notifications[event]) { return }
+        this.notifications[event]?.forEach((handler) => {handler(data)})
+    }
+}
+
+/** Initialized Event Bus */
+export const bus = new EventBus()
+
+// #endregion
+
+
+// #region :: Screens 
+// ────────────────────────────────────────────────────────────────────
+//                              Screens
+// ────────────────────────────────────────────────────────────────────
+
+
+
+// #endregion
+
+
+// #region :: User Interface 
+// ────────────────────────────────────────────────────────────────────
+//                          User Interface
+// ────────────────────────────────────────────────────────────────────
+
+
+// class UserInterfaceManager {
+//     private app: HTMLElement;
+//     private game: HTMLDivElement;
+    
+
+//     private title: TitleBarView;
+//     private player: PlayerInfoView;
+//     private scenario: ScenarioView;
+//     private options: OptionsView;
+//     private continue: HTMLButtonElement;
+//     private log: JourneyLogView;
+
+//     constructor (
+//         travel_action: CallableFunction,
+//     ) {
+//         // Define the components
+//         this.app = document.getElementById("app")!
+//         this.game = Object.assign(
+//             document.createElement('div'), {
+//                 id: "game", 
+//                 className: "max-w-4xl mx-auto bg-white p-8 rounded-xl shadow-2xl", 
+//         });
+//         this.title = new TitleBarView("The Ai Nomad Trail");
+//         this.player = new PlayerInfoView();
+//         this.scenario = new ScenarioView(
+//             "scenario-display", 
+//             "scenario-title", 
+//             "scenario-description", 
+//             "scenario-hint"
+//         );
+//         this.options = new OptionsView(
+//             "action-controls", 
+//             "scenario-controls", 
+//             "travel-button",
+//         );
+//         this.log = new JourneyLogView(
+//             "log-container", 
+//             "log-area"
+//         );
+//         this.continue = Object.assign(document.createElement("button"), {});
+//         this.continue.disabled = false;
+//         this.continue.style.backgroundColor = "#16a34a";
+//         this.continue.style.opacity = "1";
+//         this.continue.style.display = "none";
+//         this.continue.onclick = () => {
+//             travel_action()
+//         }
+
+//         // Build the DOM
+//         this.game.replaceChildren(
+//             this.title.element(),
+//             this.player.element(),
+//             this.scenario.element(),
+//             this.options.element(),
+//             this.log.element(),
+//         );
+//         this.app.replaceChildren(
+//             this.game
+//         );
+//     }
+//     professionMenu (
+//         professions: Profession[],
+//         choose_profession: CallableFunction,
+//     ): void {
+//         this.scenario.title.textContent = "Welcome to the AI Nomad Trail!"
+//         this.scenario.description.textContent = "Select your starting profession to begin the journey"
+//         this.scenario.hint.textContent = "Your stats are crucial for survival!"
+
+//         this.options.clear();
+    
+//         professions.forEach(
+//             (profession) => {
+//                 const profession_card = new ProfessionCardComponent(
+//                     profession,
+//                     choose_profession,
+//                 );
+//                 this.options.element().appendChild(profession_card.element())
+//             }
+//         )
+//     }
+//     showScenario (
+//         newScenario: Scenario,
+//         choose_option: CallableFunction,
+//     ) {
+//         this.scenario.title.textContent = newScenario.text;
+//         this.scenario.description.textContent = newScenario.description;
+//         this.scenario.show();
+
+//         this.options.clear();
+//         newScenario.options.forEach(
+//             (option, index) => {
+//                 const button = new OptionButtonComponent(option.text, () => {
+//                     choose_option(index)
+//                 })
+//                 this.options.grid.appendChild(button.element());
+//             }
+//         );
+//         this.options.continue.disabled = true;
+//         this.options.continue.style.opacity = '0.5';
+//     }
+//     apppendLog (
+//         text: string,
+//         color_code: string,
+//     ) { 
+//         const event = Object.assign(document.createElement("p"), {
+//             className: `text-sm mb-1 ${color_code}`,
+//             textContent: text,
+//         });
+//         this.log.pushEvent(event);
+//     }
+//     popLog () { 
+//         this.log.popEvent(); 
+//     }
+//     updatePlayer (player: Player) {
+//         this.player.show();
+//         this.player.set_value(player, TOTAL_DISTANCE);
+//     }
+//     travel () {
+//         // this.scenario.
+//     }
+//     gameOver (result:boolean, message: string) {
+//         this.scenario.clear();
+//         this.scenario.title.textContent = result ? "CONGRATULATIONS!" : "GAME OVER";
+//         this.scenario.description.textContent = message;
+//         this.continue.onclick = () => {location.reload()}
+//         this.continue.textContent = "Restart";
+//         this.scenario.element().appendChild(this.continue)
+//     }
+// }
+// // Initialize the User Interface.
+// const ui = new UserInterfaceManager(gameRollTravel);
+
+uiInitialize(
+    gameRollTravel
+)
+uiProfessionMenu(
+    ListRandomProfessions(), 
+    gameInitialize,
+)
 function uiInitialize (
     travel_action: CallableFunction,
 ) {
@@ -56,7 +290,6 @@ function uiInitialize (
         options_panel_grid,
         options_panel_continue,
     )
-
     /* build the dom */
     game.replaceChildren(
         title.element(),
@@ -68,6 +301,7 @@ function uiInitialize (
     if (gameArea) {gameArea.appendChild(game);}
 }
 function uiProfessionMenu (
+    professions: Profession[],
     choose_profession_action: CallableFunction,
 ) {
     const scenarioDisplay = document.getElementById('scenario-display');
@@ -99,8 +333,7 @@ function uiProfessionMenu (
         if (scenarioControls) {scenarioControls.innerHTML = '';}
     }
     if (scenarioControls) {
-        const new_professions = ListRandomProfessions();
-        new_professions.forEach(profession => {
+        professions.forEach(profession => {
             const option_card = Object.assign(document.createElement('div'), {
                 className: 'p-4 bg-gray-100 rounded-lg shadow-sm hover:shadow-md transition-shadow',
             });
@@ -157,9 +390,10 @@ function uiProfessionMenu (
     }
 }
 function uiScenario (
+    scenario: Scenario,
     confirm_travel_action: CallableFunction,
 ) {
-    if (!currentScenario) return; 
+    if (!scenario) return; 
     const scenarioDisplay = document.getElementById('scenario-display');
     const scenarioControls = document.getElementById('scenario-controls');
     const travelButton = document.getElementById('travel-button') as HTMLButtonElement;
@@ -167,12 +401,12 @@ function uiScenario (
     const scenario_title = Object.assign(
         document.createElement('h3'), {
             className: "text-xl font-semibold mb-4 text-indigo-800", 
-            textContent: `${currentScenario.text}`, 
+            textContent: `${scenario.text}`, 
     });
     const scenario_description = Object.assign(
         document.createElement('p'), {
             className: "text-gray-700", 
-            textContent: `${currentScenario.description}`
+            textContent: `${scenario.description}`
     });
     if (scenarioDisplay) {
         scenarioDisplay.replaceChildren(
@@ -184,7 +418,7 @@ function uiScenario (
     if (scenarioControls) {
         scenarioControls.innerHTML = ''; 
 
-        currentScenario.options.forEach((option, index) => {
+        scenario.options.forEach((option, index) => {
             const button = document.createElement('button');
             button.textContent = option.text;
             button.className = 'w-full px-4 py-2 mb-3 bg-indigo-500 text-white rounded-lg hover:bg-indigo-600 shadow-md';
@@ -282,9 +516,14 @@ function uiTravelButtonDisplay () {
     const scenario_controls = document.getElementById('scenario-controls')
     if (scenario_controls) {scenario_controls.innerHTML = '';}
 }
+// #endregion
 
 
-// Mapping Schema
+// #region :: Mapping functions 
+// ────────────────────────────────────────────────────────────────────
+//                          Mapping Functions
+// ────────────────────────────────────────────────────────────────────
+
 function mapOutcome (schema: z.infer<typeof OutcomeSchema>): Outcome {
     return new Outcome(
         schema.text,
@@ -317,9 +556,14 @@ function mapScenario (schema: z.infer<typeof DilemmaSchema>): Scenario {
         mapOptions(schema.options)
     );
 }
+// #endregion
 
 
-// Game Functions
+// #region :: Game Functions 
+// ────────────────────────────────────────────────────────────────────
+//                          Game Functions
+// ────────────────────────────────────────────────────────────────────
+
 function gameInitialize(profession_id:string) {
     player = new Player(getProfessionById(profession_id), TOTAL_DISTANCE);
     uiUpdate(); 
@@ -379,7 +623,7 @@ async function gameFetchScenario () {
         }
         currentScenario = getRandomScenario();
     }
-    uiScenario(gameScenarioChoice);
+    uiScenario(currentScenario, gameScenarioChoice);
     isProcessing = false;
 }
 function gameEffectMessage (effects: Stats) {
@@ -396,8 +640,4 @@ function gameEffectMessage (effects: Stats) {
     else 
         { return `Effect: ${output[0]}.`}
 }
-
-
-// Initialize game
-uiInitialize(gameRollTravel);
-uiProfessionMenu(gameInitialize);
+// #endregion
