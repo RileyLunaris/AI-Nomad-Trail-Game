@@ -594,7 +594,7 @@ function uiInitialize (
     const title = new TitleBarView("The Ai Nomad Trail");
     const player_card = new PlayerInfoView();
     const scenario_card = new ScenarioView("scenario-display", "scenario-title", "scenario-description", "scenario-hint");
-    const options_card = new OptionsView("action-controls", "scenario-controls", "travel-button",);
+    const options_card = new OptionsView("action-controls", "scenario-controls", "travel-button", travel_action);
     const log_card = new JourneyLogView("log-container", "log-area");
 
     // /* options panel */

@@ -8,6 +8,7 @@ export class OptionsView extends Component {
         panel_id: string,
         grid_id: string,
         continue_id: string,
+        action: CallableFunction,
     ) {
         super();
         this.root.id = panel_id;
@@ -20,6 +21,7 @@ export class OptionsView extends Component {
         this.continue.style = "background-color: #9ca3af; cursor: not-allowed; opacity: 0.7;";
         this.continue.className = "w-full px-4 py-3 mt-4 text-white font-bold rounded-lg";
         this.continue.textContent = "Continue Journey (Travel & Risk New Event)";
+        this.continue.onclick = () => {action()}
 
         this.root.replaceChildren(
             this.grid,
