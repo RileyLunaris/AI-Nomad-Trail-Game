@@ -94,8 +94,8 @@ export class ProfessionCardComponent extends Component {
         this.root.replaceChildren(
             this.title,
             this.description,
-            this.stats.element(),
-            this.button.element(),
+            this.stats.element,
+            this.button.element,
         )
     }
     set_value () {}

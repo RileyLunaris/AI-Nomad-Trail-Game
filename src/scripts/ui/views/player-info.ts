@@ -28,14 +28,14 @@ export class PlayerInfoView extends Component {
         
         // Dom Structure
         this.root.replaceChildren(
-            this.about.element(),
+            this.about.element,
             stat_bar_grid,
-            this.progress.element(),
+            this.progress.element,
         );
         stat_bar_grid.replaceChildren(
-            this.money.element(),
-            this.equipment.element(),
-            this.health.element(),
+            this.money.element,
+            this.equipment.element,
+            this.health.element,
         );
     }
     set_value (player: Player, distance: number) {

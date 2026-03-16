@@ -11,7 +11,7 @@ export abstract class Component {
     }
     public hide() {this.root.style.display = "none";}
     public show() {this.root.style.display = "";}
-    public element(): HTMLElement {
+    public get element(): HTMLElement {
         return this.root;
     }
 
