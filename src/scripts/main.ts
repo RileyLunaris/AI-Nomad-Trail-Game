@@ -2,12 +2,10 @@ import { ActionSchema, DilemmaSchema, OutcomeSchema, parseNewScenario } from "./
 import { getProfessionById, ListRandomProfessions } from "./game/content/professions";
 import { getRandomScenario } from "./game/content/scenarios/index.js";
 import { Player } from "./game/types/player.js";
-import { Option, Outcome, PlayerStats, Scenario, type Profession, type Stats } from "./game/types/";
+import { Option, Outcome, Scenario, type Profession, type Stats } from "./game/types/";
 import { JourneyLogView, PlayerInfoView, ScenarioView, TitleBarView } from "./ui";
 import { z } from "zod";
 import { OptionsView } from "./ui/views/options-view.js";
-import { ProfessionCardComponent } from "./ui/components/options/profession-option.js";
-import { OptionButtonComponent } from "./ui/components/options/option.js";
 
 // Game Configuration
 const START_CITY = "New York City, NY";
@@ -28,16 +26,16 @@ console.log(currentScenario)
 /** Events posted by the game. */
 export const GameEvents = {
     start: "game :: start",
-    player_change: "game :: player change",
-    scenario_change: "game :: scenario change",
+    player_update: "game :: update-player",
+    scenario_update: "game :: update-scenario",
     end: "game :: end",
 }
 
 /** Events posted by the UI and player decisions. */
 export const UIEvents = {
-    profession_choice: "user :: chose profession",
-    scenario_choice: "user :: chose scenario option",
-    end: "user :: end",
+    profession_choice: "user :: class-select",
+    profession_confirmation: "user :: class-confirm",
+    scenario_choice: "user :: scenario-option-select",
 }
 
 /** Combines the all events into a structured stringed typed */
@@ -60,22 +58,41 @@ export type EventHandler <T = any> = (data: T) => void
  */
 class EventBus {
     /** Dictionary of event names with the proper handlers. */
-    private notifications: Partial <Record <EventName, EventHandler[]>> = {}
+    private notifications = new Map <EventName, Set<EventHandler>> ()
 
     /**
-     * Subscribe to an event.
+     * Subscribe a function to an event.
      * 
      * @param event - The event flag to listen for.
      * @param handler - Funtion that will run when the event is broadcast
+     * @returns - Function to unsubscribe the function from the event
      */
     subscribe (
         event: EventName,
         handler: EventHandler,
     ) {
-        if (!this.notifications[event]) { this.notifications[event] = []}
-        this.notifications[event].push(handler)
+        if (!this.notifications.has(event)) {
+            this.notifications.set(event, new Set())
+        }
+        const event_flag = this.notifications.get(event)!
+        event_flag.add(handler)
+
+        return () => this.unsubscribe(event, handler)
     }
     
+    /**
+     * Unsubscribes a function from an eventflag
+     * 
+     * @param event - The event flag that was listened to.
+     * @param handler - Function that will no longer be called.
+     */
+    unsubscribe(
+        event: EventName, 
+        handler: EventHandler
+    ) {
+        this.notifications.get(event)?.delete(handler)
+    }
+
     /**
      * Broadcasts an event to all subscribed handlers.
      * 
@@ -86,8 +103,7 @@ class EventBus {
         event: EventName,
         data?: T,
     ) {
-        if (!this.notifications[event]) { return }
-        this.notifications[event]?.forEach((handler) => {handler(data)})
+        this.notifications.get(event)?.forEach((handler) => {handler(data)})
     }
 }
 
@@ -97,12 +113,272 @@ export const bus = new EventBus()
 // #endregion
 
 
+// #region :: Components
+// ────────────────────────────────────────────────────────────────────
+//                              Components
+// ────────────────────────────────────────────────────────────────────
+
+/**
+ * Default Component class to be implemented.
+ * 
+ * @protected root - The root div element.
+ * @method remove - Removes the container.
+ * @property element - returns The root container.
+ */
+export abstract class Component {
+    protected root: HTMLElement
+
+    /**
+     * Instantiating method.
+     * @param root - Optional: HTML Element container.
+     */
+    constructor (root?: HTMLElement) {
+        this.root = root ? root : document.createElement("div")
+        this.root.classList.add("component")
+    }
+
+    /** Removes the component container. */
+    remove () {
+        this.root.remove()
+    }
+
+    /** The root element of the component. */
+    get element (): HTMLElement {
+        return this.root
+    }
+}
+
+/**
+ * Builds a DOM HTMLElement of the stats
+ * 
+ * @param stats - Stats of the object in reference
+ * @returns - HTMLElement paragraph representation of stats
+ */
+export function cardStatInfoElement (stats: Stats): HTMLElement {
+    // objects
+    const root = document.createElement("p")
+    const divider = document.createElement("span")
+    const cash_label = document.createElement("span")
+    const equipment_label = document.createElement("span")
+    const health_label = document.createElement("span")
+    const cash_value = document.createElement("span")
+    const equipment_value = document.createElement("span")
+    const health_value = document.createElement("span")
+    
+    // css classes
+    cash_value.classList.add("money")
+
+    // text
+    cash_label.textContent = "Cash: "
+    equipment_label.textContent = "Laptop: "
+    health_label.textContent = "Mental: "
+    divider.textContent = "  |  "
+
+    //values
+    cash_value.textContent = stats.cash!.toLocaleString()
+    equipment_value.textContent = `${stats.equipment}%`
+    health_value.textContent = `${stats.health}`
+
+    // build
+    root.replaceChildren(
+        cash_label,
+        cash_value,
+        divider,
+        equipment_label,
+        equipment_value,
+        divider.cloneNode(true),
+        health_label,
+        health_value,
+    )
+
+    return root
+}
+
+/** Container object for an individual profession. */
+export class ProfessionCardComponent extends Component {
+    private title: HTMLElement = document.createElement("h3")
+    private description: HTMLElement = document.createElement("p")
+    private info: HTMLElement
+    private button: HTMLButtonElement = document.createElement("button")
+
+    private profession: Profession
+    private select: CallableFunction
+    private unsub: CallableFunction[] = []
+
+    /**
+     * Instantiating method for the Profession Card Component
+     * @param profession - Profession class for the user to select.
+     */
+    constructor (
+        profession: Profession
+    ) {
+        // Definitions
+        super()
+        this.root.classList.add("profession-card")
+
+        // Value Assigning
+        this.profession = profession
+        this.title.textContent = profession.name
+        this.description.textContent = profession.description
+        this.info = cardStatInfoElement(profession.stats)
+        this.button.textContent = `Start as ${profession.name}`
+
+        // Event Bus Handling
+        this.select = () => {
+            bus.broadcast(
+                UIEvents.profession_choice, 
+                profession
+        )}
+        this.unsub.push(
+            bus.subscribe(
+                UIEvents.profession_choice, 
+                this.onOtherSelect
+        ))
+        this.unsub.push(
+            bus.subscribe(
+                UIEvents.profession_confirmation,
+                this.onConfirm
+            )
+        )
+
+        // Event Listeners
+        this.root.addEventListener("click", this.onCardSelect)
+        this.button.addEventListener("click", this.select(), {once: true})
+
+        // DOM
+        this.build()
+    }
+    
+    /** Runs when the profession card is selected. */
+    onCardSelect () {
+        this.root.appendChild(this.button)
+    }
+
+    /** Runs when the user clicks on something else. */
+    onOtherSelect () {
+        this.root.removeChild(this.button)
+    }
+
+    /**
+     * Runs when the the user confirms the selection.
+     * @param profession - chosen profession.
+     */
+    onConfirm (profession: Profession) {
+        if (profession !== this.profession) {this.remove()}
+    }
+
+    /** Builds the DOM Structure */
+    build () {
+        this.root.replaceChildren(
+            this.title,
+            this.description,
+            this.info,
+            this.button,
+        )
+    }
+
+    /** Properly cleans and removes the objects */
+    remove () {
+        // Clean-up Event Listeners
+        this.root.removeEventListener("click", this.onCardSelect)
+        this.button.removeEventListener("click", this.select())
+        this.unsub.forEach((unsubscribe) => {unsubscribe()})
+        this.root.remove()
+    }
+}
+
+
+export class MenuInfo extends Component {
+    private title = document.createElement("h3")
+    private description = document.createElement("p")
+    private hint = document.createElement("p")
+
+    constructor () {
+        // Definitions
+        super()
+        this.root.classList.add("menu")
+
+        // Set Values
+        this.title.textContent = "Welcome to the AI Nomad Trail!"
+        this.description.textContent = "Select your dream career to begin your journey as a digital nomad."
+        this.hint.textContent = "Each profession has different abilities and stats that may help or hinder you."
+
+        // DOM
+        this.root.replaceChildren(
+            this.title,
+            this.description,
+            this.hint,
+        )
+    }
+}
+// #endregion
+
+
 // #region :: Screens 
 // ────────────────────────────────────────────────────────────────────
 //                              Screens
 // ────────────────────────────────────────────────────────────────────
 
+/** Default Screen class structure used when managing the User Interface. */
+export abstract class UIScreen {
+    /** The root screen element */
+    protected root: HTMLElement;
 
+    /** Default initializer of the UI Screen. */
+    constructor () { 
+        this.root = document.createElement("div")
+        this.root.classList.add("ui-screen")
+    }
+
+    /** Called when screen becomes visible */
+    enter (): void {}
+
+    /** Called when screen is removed */
+    exit (): void {}
+
+    /**
+     * I am groot.
+     * @returns The DOM element representing this screen
+     */
+    get element(): HTMLElement { 
+        return this.root 
+    }
+}
+
+/** Profession Selection Menu Screen. */
+export class ProfessionScreen extends UIScreen {
+    protected info_panel: MenuInfo
+    protected options_panel = document.createElement("div")
+
+    /**
+     * Initializer for the Profession Menu Screen.
+     * 
+     * @param professions - List of possible professions classes to start as.
+     */
+    constructor (
+        professions: Profession[],
+    ) {
+        // Definitions.
+        super()
+        this.root.classList.add("profession-screen")
+        this.info_panel = new MenuInfo()
+        this.options_panel.classList.add("options")
+
+        // Options Panel Building
+        professions.forEach(
+            (profession) => {
+                this.options_panel.appendChild(new ProfessionCardComponent(profession).element)
+                bus.broadcast(UIEvents.profession_choice, profession)
+            }
+        )
+
+        // DOM
+        this.root.replaceChildren(
+            this.info_panel.element,
+            this.options_panel
+        )
+    }
+}
 
 // #endregion
 
@@ -111,6 +387,60 @@ export const bus = new EventBus()
 // ────────────────────────────────────────────────────────────────────
 //                          User Interface
 // ────────────────────────────────────────────────────────────────────
+
+/**
+ * Manages a stack of UI Screens.
+ */
+class UIManager {
+    /** Stack of active UI Screens. */
+    private stack: UIScreen[] = []
+    
+    constructor () {
+
+    }
+    /** 
+     * Adds a new screen to the top of the stack. 
+     * @param screen - The new screen.
+     */
+    push (screen: UIScreen): void {
+        this.stack.push(screen)
+        screen.enter()
+    }
+
+    /** 
+     * Removes the top screen from the stack. 
+     */
+    pop (): void {
+        const screen = this.stack.pop()
+        screen?.exit()
+    }
+
+    /**
+     * Replaces the current screen with another.
+     * @param screen - the new screen.
+     */
+    replace (screen: UIScreen): void {
+        this.pop()
+        this.push(screen)
+    }
+
+    /**
+     * 
+     */
+    clear (): void {
+        while (this.stack.length > 0) {
+            this.pop()
+        }
+    }
+    /**
+     * Returns the current active screen.
+     * @returns - the active screen.
+     */
+    current (): UIScreen | undefined {
+        return this.stack[this.stack.length - 1];
+    }
+}
+
 
 
 // class UserInterfaceManager {
@@ -163,11 +493,11 @@ export const bus = new EventBus()
 
 //         // Build the DOM
 //         this.game.replaceChildren(
-//             this.title.element(),
-//             this.player.element(),
-//             this.scenario.element(),
-//             this.options.element(),
-//             this.log.element(),
+//             this.title.element,
+//             this.player.element,
+//             this.scenario.element,
+//             this.options.element,
+//             this.log.element,
 //         );
 //         this.app.replaceChildren(
 //             this.game
@@ -189,7 +519,7 @@ export const bus = new EventBus()
 //                     profession,
 //                     choose_profession,
 //                 );
-//                 this.options.element().appendChild(profession_card.element())
+//                 this.options.element.appendChild(profession_card.element)
 //             }
 //         )
 //     }
@@ -207,7 +537,7 @@ export const bus = new EventBus()
 //                 const button = new OptionButtonComponent(option.text, () => {
 //                     choose_option(index)
 //                 })
-//                 this.options.grid.appendChild(button.element());
+//                 this.options.grid.appendChild(button.element);
 //             }
 //         );
 //         this.options.continue.disabled = true;
@@ -239,7 +569,7 @@ export const bus = new EventBus()
 //         this.scenario.description.textContent = message;
 //         this.continue.onclick = () => {location.reload()}
 //         this.continue.textContent = "Restart";
-//         this.scenario.element().appendChild(this.continue)
+//         this.scenario.element.appendChild(this.continue)
 //     }
 // }
 // // Initialize the User Interface.
@@ -264,39 +594,39 @@ function uiInitialize (
     const title = new TitleBarView("The Ai Nomad Trail");
     const player_card = new PlayerInfoView();
     const scenario_card = new ScenarioView("scenario-display", "scenario-title", "scenario-description", "scenario-hint");
-    // const options_card = new Options("action-controls", "scenario-controls", "travel-button",);
+    const options_card = new OptionsView("action-controls", "scenario-controls", "travel-button",);
     const log_card = new JourneyLogView("log-container", "log-area");
 
-    /* options panel */
-    const options_panel = Object.assign(
-        document.createElement('div'), {
-            id: "action-controls",
-            className: "space-y-4",
-    });
-    const options_panel_grid = Object.assign(
-        document.createElement('div'), {
-            id: "scenario-controls", 
-            className: "space-y-4"
-    });
-    const options_panel_continue = Object.assign(
-        document.createElement('button'), {
-            id: "travel-button",
-            onclick: travel_action,
-            style: "background-color: #9ca3af; cursor: not-allowed; opacity: 0.7;",
-            className: "w-full px-4 py-3 mt-4 text-white font-bold rounded-lg",
-            textContent: "Continue Journey (Travel & Risk New Event)", 
-    });
-    options_panel.replaceChildren(
-        options_panel_grid,
-        options_panel_continue,
-    )
+    // /* options panel */
+    // const options_panel = Object.assign(
+    //     document.createElement('div'), {
+    //         id: "action-controls",
+    //         className: "space-y-4",
+    // });
+    // const options_panel_grid = Object.assign(
+    //     document.createElement('div'), {
+    //         id: "scenario-controls", 
+    //         className: "space-y-4"
+    // });
+    // const options_panel_continue = Object.assign(
+    //     document.createElement('button'), {
+    //         id: "travel-button",
+    //         onclick: travel_action,
+    //         style: "background-color: #9ca3af; cursor: not-allowed; opacity: 0.7;",
+    //         className: "w-full px-4 py-3 mt-4 text-white font-bold rounded-lg",
+    //         textContent: "Continue Journey (Travel & Risk New Event)", 
+    // });
+    // options_panel.replaceChildren(
+    //     options_panel_grid,
+    //     options_panel_continue,
+    // )
     /* build the dom */
     game.replaceChildren(
-        title.element(),
-        player_card.element(),
-        scenario_card.element(),
-        options_panel,
-        log_card.element(),
+        title.element,
+        player_card.element,
+        scenario_card.element,
+        options_card.element,
+        log_card.element,
     );
     if (gameArea) {gameArea.appendChild(game);}
 }
