@@ -2,7 +2,7 @@ import { ActionSchema, DilemmaSchema, OutcomeSchema, parseNewScenario } from "./
 import { getProfessionById, ListRandomProfessions } from "./game/content/professions";
 import { getRandomScenario } from "./game/content/scenarios/index.js";
 import { Player } from "./game/types/player.js";
-import { Option, Outcome, Scenario, type Profession, type Stats } from "./game/types/";
+import { Option, Outcome, PlayerStats, Scenario, type Formatter, type FullStats, type Profession, type Stats } from "./game/types/";
 import { JourneyLogView, PlayerInfoView, ScenarioView, TitleBarView } from "./ui";
 import { z } from "zod";
 import { OptionsView } from "./ui/views/options-view.js";
@@ -25,17 +25,23 @@ console.log(currentScenario)
 
 /** Events posted by the game. */
 export const GameEvents = {
-    start: "game :: start",
-    player_update: "game :: update-player",
-    scenario_update: "game :: update-scenario",
-    end: "game :: end",
+    // game core events
+    start: "game.start",
+    begin_journey: "game.begin_journey",
+    game_over: "game.game_over",
+
+    // gameplay updates
+    player_update: "game.player_update",
+    scenario_update: "game.scenario_update",
+    scenario_outcome: "game.scenario_outcome"
 }
 
 /** Events posted by the UI and player decisions. */
 export const UIEvents = {
-    profession_choice: "user :: class-select",
-    profession_confirmation: "user :: class-confirm",
-    scenario_choice: "user :: scenario-option-select",
+    profession_choice: "user.class_select",
+    profession_confirmation: "user.class_confirm",
+    scenario_choice: "user:scenario.option_select",
+    game_start: "user.game_start"
 }
 
 /** Combines the all events into a structured stringed typed */
@@ -53,7 +59,7 @@ export type EventHandler <T = any> = (data: T) => void
  * directly referencing eachother.
  * 
  * Components can:
- *  - subcribe to events.
+ *  - subscribe to events.
  *  - broadcast events.
  */
 class EventBus {
@@ -71,6 +77,7 @@ class EventBus {
         event: EventName,
         handler: EventHandler,
     ) {
+        console.log(`Bus Subscription: \n\tevent = ${event}, \n\thandler = ${handler}`)
         if (!this.notifications.has(event)) {
             this.notifications.set(event, new Set())
         }
@@ -86,10 +93,11 @@ class EventBus {
      * @param event - The event flag that was listened to.
      * @param handler - Function that will no longer be called.
      */
-    unsubscribe(
+    unsubscribe (
         event: EventName, 
         handler: EventHandler
     ) {
+        console.log(`Bus Unsubscribed: \n\tevent = ${event},\n\t${handler}`)
         this.notifications.get(event)?.delete(handler)
     }
 
@@ -103,6 +111,7 @@ class EventBus {
         event: EventName,
         data?: T,
     ) {
+        console.log(`Bus Broadcast:\n\t${event}\n\t${data?.toString()}`)
         this.notifications.get(event)?.forEach((handler) => {handler(data)})
     }
 }
@@ -196,14 +205,15 @@ export function cardStatInfoElement (stats: Stats): HTMLElement {
 
 /** Container object for an individual profession. */
 export class ProfessionCardComponent extends Component {
+    // HTMLElements
     private title: HTMLElement = document.createElement("h3")
     private description: HTMLElement = document.createElement("p")
     private info: HTMLElement
     private button: HTMLButtonElement = document.createElement("button")
 
+
     private profession: Profession
-    private select: CallableFunction
-    private unsub: CallableFunction[] = []
+    private subscriptions: Array<() => void> = []
 
     /**
      * Instantiating method for the Profession Card Component
@@ -223,96 +233,332 @@ export class ProfessionCardComponent extends Component {
         this.info = cardStatInfoElement(profession.stats)
         this.button.textContent = `Start as ${profession.name}`
 
-        // Event Bus Handling
-        this.select = () => {
-            bus.broadcast(
-                UIEvents.profession_choice, 
-                profession
-        )}
-        this.unsub.push(
-            bus.subscribe(
-                UIEvents.profession_choice, 
-                this.onOtherSelect
-        ))
-        this.unsub.push(
-            bus.subscribe(
-                UIEvents.profession_confirmation,
-                this.onConfirm
-            )
-        )
-
-        // Event Listeners
-        this.root.addEventListener("click", this.onCardSelect)
-        this.button.addEventListener("click", this.select(), {once: true})
-
-        // DOM
+        this.subscribe()
+        this.addCardListener()
         this.build()
     }
     
-    /** Runs when the profession card is selected. */
-    onCardSelect () {
-        this.root.appendChild(this.button)
+    //#region EventBus
+
+    /** Subscribes default handlers to the event bus. */
+    private subscribe() {
+        this.subscriptions.push(
+            bus.subscribe(
+                UIEvents.profession_choice, 
+                (profession) => {this.onOtherCardSelect(profession)}
+        ))
+        this.subscriptions.push(
+            bus.subscribe(
+                UIEvents.profession_confirmation,
+                () => {this.remove()}
+            )
+        )
     }
 
-    /** Runs when the user clicks on something else. */
-    onOtherSelect () {
-        this.root.removeChild(this.button)
+    /** Unsubscribes from the event bus */
+    private unsubscribe() {
+        this.subscriptions.forEach((unsubscribe) => {unsubscribe()})
     }
 
-    /**
-     * Runs when the the user confirms the selection.
-     * @param profession - chosen profession.
-     */
-    onConfirm (profession: Profession) {
-        if (profession !== this.profession) {this.remove()}
-    }
+    //#endregion
+    //#region DOM
 
     /** Builds the DOM Structure */
-    build () {
+    private build () {
         this.root.replaceChildren(
             this.title,
             this.description,
             this.info,
-            this.button,
         )
     }
 
-    /** Properly cleans and removes the objects */
-    remove () {
-        // Clean-up Event Listeners
+    /** Adds the button to the DOM Object. */
+    private addButton () {
+        if (this.root.contains(this.button)) return
+        this.addButtonListener()
+        this.root.append(this.button)
+    }
+
+    /** Removes the button from the DOM object. */
+    private removeButton () {
+        if (!this.root.contains(this.button)) return
+        this.removeButtonListner()
+        this.root.removeChild(this.button)
+    }
+
+    //#endregion
+    //#region Listeners
+
+    /** Adds the event listener from the card. */
+    private addCardListener () {
+        this.root.addEventListener("click", this.onCardSelect, {once:true})
+    }
+
+    /** Removes the event listener from the card. */
+    private removeCardListener () {
         this.root.removeEventListener("click", this.onCardSelect)
-        this.button.removeEventListener("click", this.select())
-        this.unsub.forEach((unsubscribe) => {unsubscribe()})
+    }
+
+    /** Adds a Listener to the button. */
+    private addButtonListener () {
+        this.button.addEventListener("click", this.onConfirm, {once: true})
+    }
+
+    /** Removes the listener to the button. */
+    private removeButtonListner () {
+        this.button.removeEventListener("click", this.onConfirm)
+    }
+
+    //#endregion
+    //#region Defined Handlers
+
+    /** Runs when the profession card is selected. */
+    private onCardSelect = () => {
+        bus.broadcast(UIEvents.profession_choice, this.profession)
+        console.log(`${this.constructor.name}: Selected @ ${this.profession.name}`)
+        this.removeCardListener()
+        this.addButton()
+    }
+
+    /** 
+     * Runs when the user clicks on something else. 
+     * @param profession - Selected Card Profession Representation
+     */
+    private onOtherCardSelect = (profession: Profession) => {
+        if (profession === this.profession) return
+        console.log(`${this.constructor.name}: Deselect @ ${this.profession.name}`)
+        this.addCardListener()
+        this.removeButton()
+    }
+
+    /** Runs when the the user confirms the selection. */
+    private onConfirm = () => {
+        console.log(`${this.constructor.name}: Confirm @ ${this.profession.name}`)
+        bus.broadcast(UIEvents.profession_confirmation, this.profession)
+    }
+
+    //#endregion
+
+    /** Properly cleans and removes the objects */
+    public remove () {
+        console.log(`${this.constructor.name}: Remove @ ${this.profession.name}`)
+        this.removeCardListener()
+        this.removeButton()
+        this.unsubscribe()
         this.root.remove()
     }
 }
 
+/**
+ * Player Stat Component
+ * Displays the current stat value.
+ * 
+ * @method set - Sets the value of the stat.
+ */
+export class PlayerStat extends Component {
+    private label = document.createElement("div")
+    private value = document.createElement("span")
 
-export class MenuInfo extends Component {
-    private title = document.createElement("h3")
-    private description = document.createElement("p")
-    private hint = document.createElement("p")
-
-    constructor () {
+    /**
+     * Initializing method of the stat.
+     * @param stat_name - the string of the class
+     */
+    constructor (stat_name: string) {
         // Definitions
         super()
-        this.root.classList.add("menu")
+        this.root.classList.add("stat", stat_name)
+        this.label.classList.add("label")
+        this.value.classList.add("value")
 
         // Set Values
-        this.title.textContent = "Welcome to the AI Nomad Trail!"
-        this.description.textContent = "Select your dream career to begin your journey as a digital nomad."
-        this.hint.textContent = "Each profession has different abilities and stats that may help or hinder you."
+        this.label.textContent = `${stat_name}: `
+
+        // DOM
+        this.label.replaceChildren(
+            this.value
+        )
+        this.root.replaceChildren(
+            this.label,
+        )
+    }
+
+    /**
+     * Sets the value of the stat.
+     * @param value - value of the stat
+     * @param formatter - formatter of the stat
+     */
+    set (
+        value: number, 
+        formatter?: Formatter
+    ) {
+        this.value.textContent = formatter ? formatter(value) : value.toLocaleString()
+    }
+}
+/**
+ * Player Stat Bar.
+ * Displays the current stat value and stat bar.
+ * 
+ * @method set - Sets the value of a stat bar.
+ */
+export class PlayerStatBar extends Component {
+    private bar = document.createElement("div")
+    private fill = document.createElement("div")
+    private label = document.createElement("div")
+    private value = document.createElement("span")
+
+    /** Initializer method for the player progress bar */
+    constructor (
+        stat_name: string,
+    ) {
+        // Definition
+        super()
+        this.root.classList.add("stat-bar", stat_name)
+        this.bar.classList.add("bar")
+        this.fill.classList.add("fill")
+        this.label.classList.add("label")
+        this.value.classList.add("value")
+        
+        // Set Values
+        this.label.textContent = `${stat_name}: `
+
+        // DOM
+        this.label.replaceChildren(
+            this.value
+        )
+        this.root.replaceChildren(
+            this.label,
+            this.bar,
+            this.fill,
+        )
+    }
+
+    /**
+     * Sets the value of the progress bar.
+     * @param value - Current stat value.
+     * @param maximum - Optional: Maximum stat value - defaults to 100.
+     * @param formatter - Optional: value formatter.
+     */
+    set (
+        value: number,
+        maximum: number = 100,
+        formatter?: Formatter,
+    ) {
+        this.value.textContent = formatter ? formatter(value) : value.toLocaleString()
+        this.fill.style.width = `${value / maximum}%` // relations controled by game logic.
+    }
+}
+
+/**
+ * Heads up Display of Player Stats
+ * Listens to Event bus for updates on player stats.
+ */
+export class PlayerStatsHUD extends Component {
+    private class = document.createElement("div")
+    private money: PlayerStat
+    private equip: PlayerStatBar
+    private health: PlayerStatBar
+    private progress: PlayerStatBar
+
+    private subscriptions: CallableFunction[] = []
+
+    /** Initializing method for the Player Stats HUD. */
+    constructor () {
+        // Definition
+        super()
+        this.root.classList.add("player-stat-hud")
+        this.money = new PlayerStat("Cash")
+        this.equip = new PlayerStatBar("Laptop")
+        this.health = new PlayerStatBar("Mental")
+        this.progress = new PlayerStatBar("Distance")
+
+        // Set Values
+        // Event Handlers
+        this.subscriptions.push(
+            bus.subscribe(
+                GameEvents.player_update,
+                (player_stats) => {this.update(player_stats)}
+        ))
+        
+        // DOM
+        this.root.replaceChildren(
+            this.class,
+            this.money.element,
+            this.equip.element,
+            this.health.element,
+            this.progress.element,
+        )
+    }
+
+    /**
+     * Updates the UI with values.
+     * @param player_stats - Values to push to the HUD
+     */
+    update (player_stats: FullStats) {
+        this.money.set(player_stats.cash)
+        this.equip.set(player_stats.equipment)
+        this.health.set(player_stats.health)
+        this.progress.set(player_stats.distance)
+    }
+
+    /**
+     * Manually cleans and removes listeners and objects.
+     */
+    remove () {
+        this.subscriptions.forEach((unsubscribe) => {unsubscribe()})
+        this.root.remove()
+    }
+}
+
+/** */
+export class ScenarioDisplay extends Component {
+    private scenario = document.createElement("div")
+    private outcome = document.createElement("div")
+    private options = document.createElement("div")
+    private button = document.createElement("button")
+
+    private subscriptions: CallableFunction[] = []
+
+    constructor () {
+        // Definition
+        super()
+        this.root.classList.add("scenario")
+
+        // Set Values
+        // Event Handling
+        this.subscriptions.push(
+            bus.subscribe(
+                GameEvents.scenario_update,
+                (scenario) => {this.displayScenario(scenario)}
+        ))
+        this.subscriptions.push(
+            bus.subscribe(
+                GameEvents.scenario_outcome, 
+                (outcome) => {this.displayOutcome(outcome)}
+        ))
+        this.subscriptions.push(
+            bus.subscribe(
+                UIEvents.scenario_choice,
+                (option) => {this.hideOptions(option)}
+        ))
 
         // DOM
         this.root.replaceChildren(
-            this.title,
-            this.description,
-            this.hint,
+            this.scenario,
+            this.outcome,
+            this.options,
+            this.button,
         )
     }
+    hideOptions (option: Option) {}
+    displayScenario (scenario: Scenario) {}
+    displayOutcome (outcome: Outcome) {}
+    remove () {
+        this.subscriptions.forEach((unsubscribe) => {unsubscribe()})
+        this.root.remove()
+    }
 }
-// #endregion
 
+// #endregion
 
 // #region :: Screens 
 // ────────────────────────────────────────────────────────────────────
@@ -320,9 +566,10 @@ export class MenuInfo extends Component {
 // ────────────────────────────────────────────────────────────────────
 
 /** Default Screen class structure used when managing the User Interface. */
-export abstract class UIScreen {
+export class UIScreen {
     /** The root screen element */
     protected root: HTMLElement;
+    protected subscriptions: Array<() => void> = []
 
     /** Default initializer of the UI Screen. */
     constructor () { 
@@ -330,11 +577,18 @@ export abstract class UIScreen {
         this.root.classList.add("ui-screen")
     }
 
+    protected subscribe () {}
+    protected unsubscribe () {}
+    protected build () {}
+    protected remove () {}
+
     /** Called when screen becomes visible */
-    enter (): void {}
+    enter (root: HTMLElement): void {
+        root.appendChild(this.root)
+    }
 
     /** Called when screen is removed */
-    exit (): void {}
+    exit () {}
 
     /**
      * I am groot.
@@ -347,8 +601,11 @@ export abstract class UIScreen {
 
 /** Profession Selection Menu Screen. */
 export class ProfessionScreen extends UIScreen {
-    protected info_panel: MenuInfo
+    protected info_panel = document.createElement("div")
     protected options_panel = document.createElement("div")
+    protected title = document.createElement("h3")
+    protected description = document.createElement("p")
+    protected hint = document.createElement("p")
 
     /**
      * Initializer for the Profession Menu Screen.
@@ -361,26 +618,110 @@ export class ProfessionScreen extends UIScreen {
         // Definitions.
         super()
         this.root.classList.add("profession-screen")
-        this.info_panel = new MenuInfo()
         this.options_panel.classList.add("options")
+        this.info_panel.classList.add("menu")
+
+        // Set Values
+        this.title.textContent = "Welcome to the AI Nomad Trail!"
+        this.description.textContent = "Select your dream career to begin your journey as a digital nomad."
+        this.hint.textContent = "Each profession has different abilities and stats that may help or hinder you."
 
         // Options Panel Building
+        this.buildProfessionCards(professions)
+        this.buildInfoPanel()
+        this.build()
+    }
+
+    buildProfessionCards (professions: Profession[]) {
+        this.options_panel.replaceChildren()
         professions.forEach(
             (profession) => {
-                this.options_panel.appendChild(new ProfessionCardComponent(profession).element)
-                bus.broadcast(UIEvents.profession_choice, profession)
+                this.options_panel.appendChild(
+                    new ProfessionCardComponent(profession).element)
             }
+        )
+    }
+    buildInfoPanel () {
+        this.info_panel.replaceChildren(
+            this.title,
+            this.description,
+            this.hint,
+        )
+    }
+    build () {
+        this.root.replaceChildren(
+            this.info_panel,
+            this.options_panel
+        )
+    }
+
+    exit () {
+        this.root.remove()
+    }
+}
+
+/** Primary gameplay screen. */
+export class ScenarioScreen extends UIScreen {
+    private player_stats: PlayerStatsHUD
+    private scenario: ScenarioDisplay
+
+    constructor (scenario: Scenario) {
+        super()
+        this.player_stats = new PlayerStatsHUD()
+        this.scenario = new ScenarioDisplay()
+
+        // Dom
+        this.root.replaceChildren(
+            this.player_stats.element,
+            this.scenario.element,
+        )
+    }
+
+    updatePlayer (player_stats: PlayerStats) {}
+    updateScenario (scenario: Scenario) {}
+    travel () {}
+    enter () {}
+    exit () {}
+    remove () {}
+}
+
+/** Game Over Screen */
+export class GameOverScreen extends UIScreen {
+    private title = document.createElement("h2")
+    private description = document.createElement("p")
+    private button = document.createElement("button")
+
+    constructor (
+        outcome: any
+    ) {
+        // Definitions
+        super()
+        this.root.classList.add("game-over")
+        this.title.textContent = outcome.win ? "Congratulations!" : "GAME OVER"
+        this.description = outcome.reason
+        this.button.textContent = "Try Again?"
+
+        // Events
+        this.button.addEventListener(
+            "click", 
+            () => {bus.broadcast(UIEvents.game_start)}, 
+            {once:true}
         )
 
         // DOM
         this.root.replaceChildren(
-            this.info_panel.element,
-            this.options_panel
+            this.title,
+            this.description,
+            this.button,
         )
     }
 }
 
+
 // #endregion
+
+
+
 
 
 // #region :: User Interface 
@@ -391,12 +732,16 @@ export class ProfessionScreen extends UIScreen {
 /**
  * Manages a stack of UI Screens.
  */
-class UIManager {
+export class UIManager {
     /** Stack of active UI Screens. */
+    private root: HTMLElement
     private stack: UIScreen[] = []
     
-    constructor () {
-
+    /**
+     * Initializing method for a UI Manager.
+     */
+    constructor (root: HTMLElement) {
+        this.root = root
     }
     /** 
      * Adds a new screen to the top of the stack. 
@@ -404,7 +749,7 @@ class UIManager {
      */
     push (screen: UIScreen): void {
         this.stack.push(screen)
-        screen.enter()
+        screen.enter(this.root)
     }
 
     /** 
@@ -441,139 +786,62 @@ class UIManager {
     }
 }
 
+let ui: UIManager
+const game_container = document.getElementById("app")
+const dev_window = document.createElement("div")
+dev_window.classList.add("dev")
+if (game_container) {
+    console.log("Creating User Interface...")
+    game_container.append(dev_window)
+    ui = new UIManager (dev_window)
+}
+
+/**
+ * Controlles the User Interface and screens based on the Event Bus
+ */
+export class UIController {
+    /** List of functions to call to unsubscribe from all current event subscriptions */
+    private subscriptions: CallableFunction[] = []
+
+    constructor () {
+        this.subscriptions.push(
+            bus.subscribe(
+                GameEvents.start, 
+                (professions) => {
+                    ui.clear()
+                    ui.replace(new ProfessionScreen(professions))
+                }
+            ),
+            bus.subscribe(
+                GameEvents.begin_journey, 
+                (scenario) => {
+                    ui.push(new ScenarioScreen(scenario))
+                }
+            ),
+            bus.subscribe(
+                GameEvents.game_over, 
+                (outcome) => {
+                    ui.push(new GameOverScreen(outcome))
+                }
+            ),
+        )
+    }
+    unsubscribe () {
+        this.subscriptions.forEach((unsubscribe) => {unsubscribe()})
+    }
+}
+
+export const controller = new UIController()
 
 
-// class UserInterfaceManager {
-//     private app: HTMLElement;
-//     private game: HTMLDivElement;
-    
 
-//     private title: TitleBarView;
-//     private player: PlayerInfoView;
-//     private scenario: ScenarioView;
-//     private options: OptionsView;
-//     private continue: HTMLButtonElement;
-//     private log: JourneyLogView;
+// #endregion
 
-//     constructor (
-//         travel_action: CallableFunction,
-//     ) {
-//         // Define the components
-//         this.app = document.getElementById("app")!
-//         this.game = Object.assign(
-//             document.createElement('div'), {
-//                 id: "game", 
-//                 className: "max-w-4xl mx-auto bg-white p-8 rounded-xl shadow-2xl", 
-//         });
-//         this.title = new TitleBarView("The Ai Nomad Trail");
-//         this.player = new PlayerInfoView();
-//         this.scenario = new ScenarioView(
-//             "scenario-display", 
-//             "scenario-title", 
-//             "scenario-description", 
-//             "scenario-hint"
-//         );
-//         this.options = new OptionsView(
-//             "action-controls", 
-//             "scenario-controls", 
-//             "travel-button",
-//         );
-//         this.log = new JourneyLogView(
-//             "log-container", 
-//             "log-area"
-//         );
-//         this.continue = Object.assign(document.createElement("button"), {});
-//         this.continue.disabled = false;
-//         this.continue.style.backgroundColor = "#16a34a";
-//         this.continue.style.opacity = "1";
-//         this.continue.style.display = "none";
-//         this.continue.onclick = () => {
-//             travel_action()
-//         }
 
-//         // Build the DOM
-//         this.game.replaceChildren(
-//             this.title.element,
-//             this.player.element,
-//             this.scenario.element,
-//             this.options.element,
-//             this.log.element,
-//         );
-//         this.app.replaceChildren(
-//             this.game
-//         );
-//     }
-//     professionMenu (
-//         professions: Profession[],
-//         choose_profession: CallableFunction,
-//     ): void {
-//         this.scenario.title.textContent = "Welcome to the AI Nomad Trail!"
-//         this.scenario.description.textContent = "Select your starting profession to begin the journey"
-//         this.scenario.hint.textContent = "Your stats are crucial for survival!"
-
-//         this.options.clear();
-    
-//         professions.forEach(
-//             (profession) => {
-//                 const profession_card = new ProfessionCardComponent(
-//                     profession,
-//                     choose_profession,
-//                 );
-//                 this.options.element.appendChild(profession_card.element)
-//             }
-//         )
-//     }
-//     showScenario (
-//         newScenario: Scenario,
-//         choose_option: CallableFunction,
-//     ) {
-//         this.scenario.title.textContent = newScenario.text;
-//         this.scenario.description.textContent = newScenario.description;
-//         this.scenario.show();
-
-//         this.options.clear();
-//         newScenario.options.forEach(
-//             (option, index) => {
-//                 const button = new OptionButtonComponent(option.text, () => {
-//                     choose_option(index)
-//                 })
-//                 this.options.grid.appendChild(button.element);
-//             }
-//         );
-//         this.options.continue.disabled = true;
-//         this.options.continue.style.opacity = '0.5';
-//     }
-//     apppendLog (
-//         text: string,
-//         color_code: string,
-//     ) { 
-//         const event = Object.assign(document.createElement("p"), {
-//             className: `text-sm mb-1 ${color_code}`,
-//             textContent: text,
-//         });
-//         this.log.pushEvent(event);
-//     }
-//     popLog () { 
-//         this.log.popEvent(); 
-//     }
-//     updatePlayer (player: Player) {
-//         this.player.show();
-//         this.player.set_value(player, TOTAL_DISTANCE);
-//     }
-//     travel () {
-//         // this.scenario.
-//     }
-//     gameOver (result:boolean, message: string) {
-//         this.scenario.clear();
-//         this.scenario.title.textContent = result ? "CONGRATULATIONS!" : "GAME OVER";
-//         this.scenario.description.textContent = message;
-//         this.continue.onclick = () => {location.reload()}
-//         this.continue.textContent = "Restart";
-//         this.scenario.element.appendChild(this.continue)
-//     }
-// }
-// // Initialize the User Interface.
-// const ui = new UserInterfaceManager(gameRollTravel);
+// #region :: OLD UI Functions
+// ────────────────────────────────────────────────────────────────────
+//                          Old User Interface
+// ────────────────────────────────────────────────────────────────────
 
 uiInitialize(
     gameRollTravel
@@ -971,3 +1239,5 @@ function gameEffectMessage (effects: Stats) {
         { return `Effect: ${output[0]}.`}
 }
 // #endregion
+
+ui!.push(new ProfessionScreen(ListRandomProfessions()))

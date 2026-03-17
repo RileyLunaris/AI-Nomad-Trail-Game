@@ -88,3 +88,28 @@ body {
     overflow: hidden;
     transition: width 0.5s;
 }
+
+.dev {
+    width: auto;
+    align-self: auto;
+    justify-self: auto;
+    border-radius: 0.5rem;
+    background-color: #d7a4e4;
+}
+.h3 {
+    color: var(--header)
+}
+.profession-screen h3 {
+    color: var(--header);
+}
+.profession-card {
+    background-color: #a4808e;
+    border: 10px #16a34a;
+    border-radius: 0.5rem;
+    margin: 4px;
+}
+.profession-card button {
+    background-color: var(--background);
+    border-radius: 0.5rem;
+    margin: 
+}
