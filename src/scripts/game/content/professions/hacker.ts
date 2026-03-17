@@ -2,7 +2,7 @@ import type { Profession } from "../../types"
 
 export const Hacker: Profession = {
     id: "hacker",
-    name: " Hacker",
+    name: "Hacker",
     description: "Knows every backdoor, but still struggles to remember their own Wi-Fi password. Lives for caffeine and chaos.",
     quirk: "Breaks into systems just to leave a funny ASCII art.",
     stats: {

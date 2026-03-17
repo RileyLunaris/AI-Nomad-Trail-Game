@@ -2,7 +2,7 @@ import type { Profession } from "../../types"
 
 export const EmojiLawyer: Profession = {
     id: "emoji_lawyer",
-    name: " Emoji Lawyer",
+    name: "Emoji Lawyer",
     description: "Argues cases using only emojis. Surprisingly effective.",
     quirk: "Uses 😂 for objections",
     stats: {
