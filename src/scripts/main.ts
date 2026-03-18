@@ -39,7 +39,6 @@ export const GameEvents = {
 /** Events posted by the UI and player decisions. */
 export const UIEvents = {
     profession_choice: "user.class_select",
-    profession_confirmation: "user.class_confirm",
     scenario_choice: "user:scenario.option_select",
     game_start: "user.game_start"
 }
@@ -211,7 +210,6 @@ export class ProfessionCardComponent extends Component {
     private info: HTMLElement
     private button: HTMLButtonElement = document.createElement("button")
 
-
     private profession: Profession
     private subscriptions: Array<() => void> = []
 
@@ -225,6 +223,8 @@ export class ProfessionCardComponent extends Component {
         // Definitions
         super()
         this.root.classList.add("profession-card")
+        this.root.onmouseenter = () => {this.onMouseEnter()}
+        this.root.onmouseleave = () => {this.onMouseLeave()}
 
         // Value Assigning
         this.profession = profession
@@ -234,7 +234,6 @@ export class ProfessionCardComponent extends Component {
         this.button.textContent = `Start as ${profession.name}`
 
         this.subscribe()
-        this.addCardListener()
         this.build()
     }
     
@@ -245,11 +244,6 @@ export class ProfessionCardComponent extends Component {
         this.subscriptions.push(
             bus.subscribe(
                 UIEvents.profession_choice, 
-                (profession) => {this.onOtherCardSelect(profession)}
-        ))
-        this.subscriptions.push(
-            bus.subscribe(
-                UIEvents.profession_confirmation,
                 () => {this.remove()}
             )
         )
@@ -270,6 +264,7 @@ export class ProfessionCardComponent extends Component {
             this.description,
             this.info,
         )
+
     }
 
     /** Adds the button to the DOM Object. */
@@ -289,16 +284,6 @@ export class ProfessionCardComponent extends Component {
     //#endregion
     //#region Listeners
 
-    /** Adds the event listener from the card. */
-    private addCardListener () {
-        this.root.addEventListener("click", this.onCardSelect, {once:true})
-    }
-
-    /** Removes the event listener from the card. */
-    private removeCardListener () {
-        this.root.removeEventListener("click", this.onCardSelect)
-    }
-
     /** Adds a Listener to the button. */
     private addButtonListener () {
         this.button.addEventListener("click", this.onConfirm, {once: true})
@@ -313,10 +298,8 @@ export class ProfessionCardComponent extends Component {
     //#region Defined Handlers
 
     /** Runs when the profession card is selected. */
-    private onCardSelect = () => {
-        bus.broadcast(UIEvents.profession_choice, this.profession)
-        console.log(`${this.constructor.name}: Selected @ ${this.profession.name}`)
-        this.removeCardListener()
+    private onMouseEnter= () => {
+        console.log(`${this.constructor.name}: mouse-over @ ${this.profession.name}`)
         this.addButton()
     }
 
@@ -324,17 +307,15 @@ export class ProfessionCardComponent extends Component {
      * Runs when the user clicks on something else. 
      * @param profession - Selected Card Profession Representation
      */
-    private onOtherCardSelect = (profession: Profession) => {
-        if (profession === this.profession) return
-        console.log(`${this.constructor.name}: Deselect @ ${this.profession.name}`)
-        this.addCardListener()
+    private onMouseLeave = () => {
+        console.log(`${this.constructor.name}: mouse-away @ ${this.profession.name}`)
         this.removeButton()
     }
 
     /** Runs when the the user confirms the selection. */
     private onConfirm = () => {
         console.log(`${this.constructor.name}: Confirm @ ${this.profession.name}`)
-        bus.broadcast(UIEvents.profession_confirmation, this.profession)
+        bus.broadcast(UIEvents.profession_choice, this.profession)
     }
 
     //#endregion
@@ -342,7 +323,6 @@ export class ProfessionCardComponent extends Component {
     /** Properly cleans and removes the objects */
     public remove () {
         console.log(`${this.constructor.name}: Remove @ ${this.profession.name}`)
-        this.removeCardListener()
         this.removeButton()
         this.unsubscribe()
         this.root.remove()
@@ -729,17 +709,13 @@ export class GameOverScreen extends UIScreen {
 //                          User Interface
 // ────────────────────────────────────────────────────────────────────
 
-/**
- * Manages a stack of UI Screens.
- */
+/** Manages a stack of UI Screens. */
 export class UIManager {
     /** Stack of active UI Screens. */
     private root: HTMLElement
     private stack: UIScreen[] = []
     
-    /**
-     * Initializing method for a UI Manager.
-     */
+    /** Initializing method for a UI Manager. */
     constructor (root: HTMLElement) {
         this.root = root
     }
@@ -752,9 +728,7 @@ export class UIManager {
         screen.enter(this.root)
     }
 
-    /** 
-     * Removes the top screen from the stack. 
-     */
+    /** Removes the top screen from the stack. */
     pop (): void {
         const screen = this.stack.pop()
         screen?.exit()
@@ -769,9 +743,7 @@ export class UIManager {
         this.push(screen)
     }
 
-    /**
-     * 
-     */
+    /** Removes all screens except for the first. */
     clear (): void {
         while (this.stack.length > 0) {
             this.pop()
@@ -790,15 +762,14 @@ let ui: UIManager
 const game_container = document.getElementById("app")
 const dev_window = document.createElement("div")
 dev_window.classList.add("dev")
+dev_window.textContent = "___ Developer Window ___"
 if (game_container) {
     console.log("Creating User Interface...")
     game_container.append(dev_window)
     ui = new UIManager (dev_window)
 }
 
-/**
- * Controlles the User Interface and screens based on the Event Bus
- */
+/** Controlles the User Interface and screens based on the Event Bus. */
 export class UIController {
     /** List of functions to call to unsubscribe from all current event subscriptions */
     private subscriptions: CallableFunction[] = []
@@ -865,29 +836,6 @@ function uiInitialize (
     const options_card = new OptionsView("action-controls", "scenario-controls", "travel-button", travel_action);
     const log_card = new JourneyLogView("log-container", "log-area");
 
-    // /* options panel */
-    // const options_panel = Object.assign(
-    //     document.createElement('div'), {
-    //         id: "action-controls",
-    //         className: "space-y-4",
-    // });
-    // const options_panel_grid = Object.assign(
-    //     document.createElement('div'), {
-    //         id: "scenario-controls", 
-    //         className: "space-y-4"
-    // });
-    // const options_panel_continue = Object.assign(
-    //     document.createElement('button'), {
-    //         id: "travel-button",
-    //         onclick: travel_action,
-    //         style: "background-color: #9ca3af; cursor: not-allowed; opacity: 0.7;",
-    //         className: "w-full px-4 py-3 mt-4 text-white font-bold rounded-lg",
-    //         textContent: "Continue Journey (Travel & Risk New Event)", 
-    // });
-    // options_panel.replaceChildren(
-    //     options_panel_grid,
-    //     options_panel_continue,
-    // )
     /* build the dom */
     game.replaceChildren(
         title.element,
