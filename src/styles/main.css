@@ -76,19 +76,56 @@ body {
     transition: width 0.5s ease-in-out;
 }
 
-.stat-bar {
-    height: 1.5rem;
-    border-radius: 0.5rem;
-    overflow: hidden;
+.stat-row {
+    /* display: grid; */
+    /* grid-template-columns: auto 1fr; */
+    display: flex;
+    flex: 1;
+    align-items: center;
+    gap: 1rem;
+    vertical-align: middle;
+    margin-bottom: 3px;
 }
-
-.stat-fill {
+.stat-bar {
+    background-color: gray;
+    border-color: black;
+    border-radius: 8px;
+    border-width: 1px;
+    width: 100%;
     height: 1.5rem;
+    overflow: hidden;
+    position: relative;
+}
+.label {
+    min-width: 80px;
+    text-align: right;
+}
+.stat-bar .value {
+    position: absolute;
+    text-align: center;
+    top: 0;
+    line-height: 25px;
+    font-weight: bold;
+}
+.stat-fill {
+    background-color: #22c55e;
+    height: 100%;
     border-radius: 0.5rem;
     overflow: hidden;
     transition: width 0.5s;
 }
-
+.Laptop .stat-fill {
+    background-color: limegreen;
+}
+.Mental .stat-fill {
+    background-color: pink;
+}
+.Distance .stat-fill {
+    background-color: deepskyblue;
+}
+.Cash .value {
+    color: limegreen;
+}
 .dev {
     margin-bottom: 1rem;
     border-width:  1px;
@@ -106,4 +143,10 @@ body {
 .profession-card:hover {
 }
 .profession-card button {
+}
+.player-stat-hud {
+    margin-bottom: 0.5rem; 
+}
+.options {
+    display: grid;
 }
