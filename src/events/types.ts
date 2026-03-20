@@ -1,4 +1,10 @@
+
+// ────────────────────────────────────────────────────────────────────────────
+//                                  Event Types
+// ────────────────────────────────────────────────────────────────────────────
+
 import { GameEvents, UIEvents } from "."
+
 
 /**
  * Default structure for Event Handlers and optional data.
