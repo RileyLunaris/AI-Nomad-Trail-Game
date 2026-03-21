@@ -3,7 +3,7 @@
 //                                  Events Bus
 // ────────────────────────────────────────────────────────────────────────────
 
-import type {EventName, EventHandler} from "./"
+import type {EventName, EventHandler} from "."
 
 
 /**

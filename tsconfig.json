@@ -3,6 +3,10 @@
         /* File Layout */
         "rootDir": "./src",
         "outDir": "./dist",
+        "baseUrl": "./src",
+        "paths": {
+            "@/*": ["*"]
+        },
 
         /* Other Outputs */
         "sourceMap": true,

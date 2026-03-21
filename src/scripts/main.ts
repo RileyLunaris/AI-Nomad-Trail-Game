@@ -1,3 +1,4 @@
+// old imports
 import { ActionSchema, DilemmaSchema, OutcomeSchema, parseNewScenario } from "./api/generate_scenario.js";
 import { getProfessionById, ListRandomProfessions } from "./game/content/professions";
 import { getRandomScenario } from "./game/content/scenarios/index.js";
@@ -6,7 +7,11 @@ import { Option, Outcome, PlayerStats, Scenario, type Formatter, type FullStats,
 import { JourneyLogView, PlayerInfoView, ScenarioView, TitleBarView } from "./ui";
 import { z } from "zod";
 import { OptionsView } from "./ui/views/options-view.js";
-import { EventBus, GameEvents, UIEvents } from "../events/index.js";
+
+// New Imports
+import { EventBus, GameEvents, UIEvents } from "@/events"
+import { UIScreen } from "@/screens"
+
 
 // Game Configuration
 const START_CITY = "New York City, NY";
@@ -17,6 +22,8 @@ let player: Player;
 let isProcessing: boolean = false;
 let currentScenario: Scenario = new Scenario(); 
 console.log(currentScenario)
+
+
 
 const bus = new EventBus()
 
@@ -487,102 +494,8 @@ export class LogDisplay extends Component {
 //                              Screens
 // ────────────────────────────────────────────────────────────────────
 
-/** Default Screen class structure used when managing the User Interface. */
-export class UIScreen {
-    /** The root screen element */
-    protected root: HTMLElement;
-    protected subscriptions: Array<() => void> = []
 
-    /** Default initializer of the UI Screen. */
-    constructor () { 
-        this.root = document.createElement("div")
-        this.root.classList.add("ui-screen")
-    }
 
-    protected subscribe () {}
-    protected unsubscribe () {}
-    protected build () {}
-    protected remove () {}
-
-    /** Called when screen becomes visible */
-    enter (root: HTMLElement): void {
-        root.appendChild(this.root)
-    }
-
-    /** Called when screen is removed */
-    exit () {}
-
-    /**
-     * I am groot.
-     * @returns The DOM element representing this screen
-     */
-    get element(): HTMLElement { 
-        return this.root 
-    }
-}
-
-/** Profession Selection Menu Screen. */
-export class ProfessionScreen extends UIScreen {
-    protected info_panel = document.createElement("div")
-    protected options_panel = document.createElement("div")
-    protected title = document.createElement("h3")
-    protected description = document.createElement("p")
-    protected hint = document.createElement("p")
-
-    /**
-     * Initializer for the Profession Menu Screen.
-     * 
-     * @param professions - List of possible professions classes to start as.
-     */
-    constructor (
-        professions: Profession[],
-    ) {
-        // Definitions.
-        super()
-        this.root.classList.add("profession-screen")
-        this.options_panel.classList.add("options")
-        this.info_panel.classList.add("menu")
-
-        // Set Values
-        this.title.textContent = "Welcome to the AI Nomad Trail!"
-        this.description.textContent = "Select your dream career to begin your journey as a digital nomad."
-        this.hint.textContent = "Each profession has different abilities and stats that may help or hinder you."
-
-        // Options Panel Building
-        this.buildProfessionCards(professions)
-        this.buildInfoPanel()
-        this.build()
-    }
-
-    buildProfessionCards (professions: Profession[]) {
-        this.options_panel.replaceChildren()
-        professions.forEach(
-            (profession) => {
-                this.options_panel.appendChild(
-                    new ProfessionCardComponent(profession).element)
-            }
-        )
-    }
-    buildInfoPanel () {
-        this.info_panel.replaceChildren(
-            this.title,
-            this.description,
-            this.hint,
-        )
-    }
-    build () {
-        const title = Object.assign(document.createElement("div"), {textContent: " --- Profession Screen --- "})
-        this.root.replaceChildren(
-            title,
-            this.info_panel,
-            this.options_panel,
-        )
-    }
-
-    exit () {
-        this.root.remove()
-    }
-}
 
 /** Primary gameplay screen. */
 export class ScenarioScreen extends UIScreen {
