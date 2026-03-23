@@ -10,7 +10,6 @@ import { OptionsView } from "./ui/views/options-view.js";
 
 // New Imports
 import { EventBus, GameEvents, UIEvents } from "@/events"
-import { UIScreen } from "@/screens"
 
 
 // Game Configuration
@@ -494,8 +493,102 @@ export class LogDisplay extends Component {
 //                              Screens
 // ────────────────────────────────────────────────────────────────────
 
+/** Default Screen class structure used when managing the User Interface. */
+export class UIScreen {
+    /** The root screen element */
+    protected root: HTMLElement;
+    protected subscriptions: Array<() => void> = []
 
+    /** Default initializer of the UI Screen. */
+    constructor () { 
+        this.root = document.createElement("div")
+        this.root.classList.add("ui-screen")
+    }
 
+    protected subscribe () {}
+    protected unsubscribe () {}
+    protected build () {}
+    protected remove () {}
+
+    /** Called when screen becomes visible */
+    enter (root: HTMLElement): void {
+        root.appendChild(this.root)
+    }
+
+    /** Called when screen is removed */
+    exit () {}
+
+    /**
+     * I am groot.
+     * @returns The DOM element representing this screen
+     */
+    get element(): HTMLElement { 
+        return this.root 
+    }
+}
+
+/** Profession Selection Menu Screen. */
+export class ProfessionScreen extends UIScreen {
+    protected info_panel = document.createElement("div")
+    protected options_panel = document.createElement("div")
+    protected title = document.createElement("h3")
+    protected description = document.createElement("p")
+    protected hint = document.createElement("p")
+
+    /**
+     * Initializer for the Profession Menu Screen.
+     * 
+     * @param professions - List of possible professions classes to start as.
+     */
+    constructor (
+        professions: Profession[],
+    ) {
+        // Definitions.
+        super()
+        this.root.classList.add("profession-screen")
+        this.options_panel.classList.add("options")
+        this.info_panel.classList.add("menu")
+
+        // Set Values
+        this.title.textContent = "Welcome to the AI Nomad Trail!"
+        this.description.textContent = "Select your dream career to begin your journey as a digital nomad."
+        this.hint.textContent = "Each profession has different abilities and stats that may help or hinder you."
+
+        // Options Panel Building
+        this.buildProfessionCards(professions)
+        this.buildInfoPanel()
+        this.build()
+    }
+
+    buildProfessionCards (professions: Profession[]) {
+        this.options_panel.replaceChildren()
+        professions.forEach(
+            (profession) => {
+                this.options_panel.appendChild(
+                    new ProfessionCardComponent(profession).element)
+            }
+        )
+    }
+    buildInfoPanel () {
+        this.info_panel.replaceChildren(
+            this.title,
+            this.description,
+            this.hint,
+        )
+    }
+    build () {
+        const title = Object.assign(document.createElement("div"), {textContent: " --- Profession Screen --- "})
+        this.root.replaceChildren(
+            title,
+            this.info_panel,
+            this.options_panel,
+        )
+    }
+
+    exit () {
+        this.root.remove()
+    }
+}
 
 /** Primary gameplay screen. */
 export class ScenarioScreen extends UIScreen {
@@ -661,23 +754,23 @@ export class UIController {
     private subscriptions: CallableFunction[] = []
 
     constructor () {
+        // Helpers
+        const start_game = (professions: Profession[]) => {
+            ui.clear()
+            ui.replace(new ProfessionScreen(professions))
+        }
+        const play_game = (scenario: Scenario) => {
+            ui.push(new ScenarioScreen(player, scenario))
+        }
+        const end_game = (outcome: Outcome) => {
+            ui.push(new GameOverScreen(outcome))
+        }
+
+        // Subscriptions
         this.subscriptions.push(
-            bus.on(GameEvents.start)
-                .do((professions) => {
-                    ui.clear()
-                    ui.replace(new ProfessionScreen(professions))
-                })
-                .subscribe(),
-            bus.on(GameEvents.play)
-                .do((scenario) => {
-                    ui.push(new ScenarioScreen(player, scenario))
-                })
-                .subscribe(),
-            bus.on(GameEvents.game_over)
-                .do((outcome) => {
-                    ui.push(new GameOverScreen(outcome))
-                })
-                .subscribe(),
+            bus.on(GameEvents.start).do(start_game).subscribe(),
+            bus.on(GameEvents.play).do(play_game).subscribe(),
+            bus.on(GameEvents.game_over).do(end_game).subscribe(),
         )
     }
     unsubscribe () {
