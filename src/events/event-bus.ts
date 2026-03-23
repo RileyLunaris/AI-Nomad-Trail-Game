@@ -1,7 +1,7 @@
 
-// ────────────────────────────────────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════════════════
 //                                  Events Bus
-// ────────────────────────────────────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════════════════
 
 import type {EventName, EventHandler} from "."
 
@@ -182,11 +182,13 @@ export class EventBus {
     subscribe (
         event: EventName,
         handler: EventHandler,
-    ) {
+    ): () => void {
         if (!this.events.has(event)) {
             this.events.set(event, new Set())
         }
         this.events.get(event)!.add(handler)
+
+        return () => {this.unsubscribe(event, handler)}
     }
 
     /**
