@@ -5,10 +5,10 @@
 
 
 /** 
- * Events that happen within the core game logic.
- * 
- * These allow the visual display and user interface to repond to events that
- * happen within the game logic. 
+ * Defines all event names related to core game lifecycle and state changes.
+ *
+ * These events typically represent high-level transitions or actions
+ * that affect the overall game flow.
  */
 export const GameEvents = {
     /** The game is initialized. */

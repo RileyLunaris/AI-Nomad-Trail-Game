@@ -5,9 +5,10 @@
 
 
 /** 
- * Events that happen to the player.
+ * Defines event names for player specific actions within the game.
  * 
- * Things that happened to the player. 
+ * These events are a subset of game events that are directly related to the
+ * player's status and states within the game.
  */
 export const PlayerEvents = {
     /** The player's stats were affected.  */
