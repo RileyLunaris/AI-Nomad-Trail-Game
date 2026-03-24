@@ -1,22 +1,15 @@
 
 // ═══════════════════════════════════════════════════════════════════════════
-//                                  Game Events
+//                                  Player Events
 // ═══════════════════════════════════════════════════════════════════════════
 
 
 /** 
- * Events that happen within the core game logic.
+ * Events that happen to the player.
  * 
- * These allow the visual display and user interface to repond to events that
- * happen within the game logic. 
+ * Things that happened to the player. 
  */
-export const GameEvents = {
-    /** The game is initialized. */
-    started: "game.started",
-
-    /** The game is a foot. 🦶 */
-    playing: "game.playing",
-
-    /** The game has ended. */
-    game_over: "game.game_over",
+export const PlayerEvents = {
+    /** The player's stats were affected.  */
+    update: "player.update",
 }

@@ -1,22 +1,17 @@
 
 // ═══════════════════════════════════════════════════════════════════════════
-//                                  Game Events
+//                                  Scenario Events
 // ═══════════════════════════════════════════════════════════════════════════
 
 
 /** 
- * Events that happen within the core game logic.
+ * Events that happen within Scenarios.
  * 
- * These allow the visual display and user interface to repond to events that
- * happen within the game logic. 
  */
-export const GameEvents = {
-    /** The game is initialized. */
-    started: "game.started",
+export const ScenarioEvents = {
+    /** A new scenario encounter. */
+    update: "scenario.update",
 
-    /** The game is a foot. 🦶 */
-    playing: "game.playing",
-
-    /** The game has ended. */
-    game_over: "game.game_over",
+    /** The game scenario Outcome has resolved. */
+    outcome: "scenario.outcome",
 }
