@@ -3,7 +3,7 @@
 //                                  Event Types
 // ═══════════════════════════════════════════════════════════════════════════
 
-import { GameEvents, UIEvents } from "."
+import { GameEvents, UserEvents } from "."
 
 
 /**
@@ -21,7 +21,7 @@ export type EventHandler <T = any> = (data: T) => void
  */
 export type EventName = 
 | typeof GameEvents[keyof typeof GameEvents]
-| typeof UIEvents[keyof typeof UIEvents];
+| typeof UserEvents[keyof typeof UserEvents]
 
 
 /**

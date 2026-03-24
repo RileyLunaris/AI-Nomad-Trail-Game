@@ -14,10 +14,10 @@ export const GameEvents = {
     //#region game core events
 
     /** The game is initialized. */
-    start: "game.start",
+    started: "game.started",
 
     /** The game is a foot. 🦶 */
-    play: "game.play",
+    playing: "game.playing",
 
     /** The game has ended. */
     game_over: "game.game_over",
@@ -37,4 +37,8 @@ export const GameEvents = {
     scenario_outcome: "game.scenario_outcome",
 
     //#endregion
+
+
+    /** The player requires a class to play the game */
+    get_player_class: "game.get_player_class"
 }

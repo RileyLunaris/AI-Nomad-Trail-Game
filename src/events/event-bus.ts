@@ -227,6 +227,7 @@ export class EventBus {
      * ```
      */
     broadcast <T> (event: EventName, data?:T) {
+        console.log(`Event: ${event}`)
         this.events.get(event)?.forEach((handle) => {handle(data)})
     }
 
