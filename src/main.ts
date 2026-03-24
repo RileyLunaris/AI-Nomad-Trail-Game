@@ -1,12 +1,12 @@
 // old imports
-import { ActionSchema, DilemmaSchema, OutcomeSchema, parseNewScenario } from "./api/generate_scenario.js";
-import { getProfessionById, ListRandomProfessions } from "./game/content/professions";
-import { getRandomScenario } from "./game/content/scenarios/index.js";
-import { Player } from "./game/types/player.js";
-import { Option, Outcome, Scenario, type Profession, type Stats } from "./game/types/";
-import { JourneyLogView, PlayerInfoView, ScenarioView, TitleBarView } from "./ui";
+import { ActionSchema, DilemmaSchema, OutcomeSchema, parseNewScenario } from "./scripts/api/generate_scenario.js";
+import { getProfessionById, ListRandomProfessions } from "./scripts/game/content/professions/index.js";
+import { getRandomScenario } from "./scripts/game/content/scenarios/index.js";
+import { Player } from "./scripts/game/types/player.js";
+import { Option, Outcome, Scenario, type Profession, type Stats } from "./scripts/game/types/index.js";
+import { JourneyLogView, PlayerInfoView, ScenarioView, TitleBarView } from "./scripts/ui/index.js";
 import { z } from "zod";
-import { OptionsView } from "./ui/views/options-view.js";
+import { OptionsView } from "./scripts/ui/views/options-view.js";
 
 // New Imports
 import { EventBus } from "@/events"
