@@ -11,12 +11,13 @@ body {
 }
 
 #app {
+    min-width: 80vw;
     min-height: 80vh;
-    padding: 1rem;
+    /* padding: 1rem; */
 }
 @media (min-width: 768px){
     #app{
-        padding: 2rem;
+        /* padding: 2rem; */
     }
 }
 
@@ -127,11 +128,11 @@ body {
     color: limegreen;
 }
 .dev {
-    margin-bottom: 1rem;
+    /* margin-bottom: 1rem;
     border-width:  1px;
     border-color: black;
     border-radius: 8px;
-    padding: 5px;
+    padding: 5px; */
 }
 .h3 {
 }
