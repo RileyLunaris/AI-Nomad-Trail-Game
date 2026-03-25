@@ -5,6 +5,7 @@
 
 import { UserEvents } from "@/events";
 import { Screen } from ".";
+import "@/styles/screens/start.scss"
 
 
 /**
