@@ -19,4 +19,4 @@ export const GameEvents = {
 
     /** The game has ended. */
     game_over: "game.game_over",
-}
+} as const

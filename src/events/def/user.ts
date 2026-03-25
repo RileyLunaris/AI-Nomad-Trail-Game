@@ -22,4 +22,4 @@ export const UserEvents = {
 
     /** User chose an option from the scenario. */
     chose_scenario_option: "user.chose_scenario_option",
-}
+} as const

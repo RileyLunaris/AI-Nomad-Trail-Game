@@ -13,4 +13,4 @@
 export const PlayerEvents = {
     /** The player's stats were affected.  */
     update: "player.update",
-}
+} as const

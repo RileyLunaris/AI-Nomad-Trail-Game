@@ -16,4 +16,4 @@ export const ScenarioEvents = {
 
     /** The game scenario Outcome has resolved. */
     outcome: "scenario.outcome",
-}
+} as const
