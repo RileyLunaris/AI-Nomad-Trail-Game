@@ -14,6 +14,9 @@ export const GameEvents = {
     /** The game is initialized. */
     started: "game.started",
 
+    /**  */
+    choose_class: "game.choose_class",
+    
     /** The game is a foot. 🦶 */
     playing: "game.playing",
 
