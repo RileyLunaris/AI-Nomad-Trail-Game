@@ -4,8 +4,8 @@
 // ═══════════════════════════════════════════════════════════════════════════
 
 import { GameEvents, type EventBus } from "@/events";
-import { ClassSelectionScreen, StartScreen } from "../screens";
-import type { ScreenManager } from "./manager";
+import { ClassSelectionScreen, StartScreen } from "./screens";
+import type { ScreenManager } from ".";
 
 
 export class ScreenController {

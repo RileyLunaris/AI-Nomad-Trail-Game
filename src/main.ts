@@ -11,7 +11,7 @@ import { OptionsView } from "./scripts/ui/views/options-view.js";
 // New Imports
 import { EventBus } from "@/events"
 import { GameEngine } from "./core/game/engine.js";
-import { ScreenController, ScreenManager } from "@/ui/controllers";
+import { ScreenController, ScreenManager } from "@/ui";
 
 // Game Configuration
 const START_CITY = "New York City, NY";
