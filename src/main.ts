@@ -36,10 +36,9 @@ ctlr.subscribe()
 man.push(new StartScreen(bus))
 
 
-// #region :: OLD UI Functions
-// ────────────────────────────────────────────────────────────────────
-//                          Old User Interface
-// ────────────────────────────────────────────────────────────────────
+// #region Old User Interface
+// ───────────────────────────────────────────────────────────────────────
+
 
 uiInitialize(
     gameRollTravel
@@ -289,13 +288,12 @@ function uiTravelButtonDisplay () {
     const scenario_controls = document.getElementById('scenario-controls')
     if (scenario_controls) {scenario_controls.innerHTML = '';}
 }
+
+
 // #endregion
+// ───────────────────────────────────────────────────────────────────────
+// #region Mapping functions 
 
-
-// #region :: Mapping functions 
-// ────────────────────────────────────────────────────────────────────
-//                          Mapping Functions
-// ────────────────────────────────────────────────────────────────────
 
 function mapOutcome (schema: z.infer<typeof OutcomeSchema>): Outcome {
     return new Outcome(
@@ -329,13 +327,12 @@ function mapScenario (schema: z.infer<typeof DilemmaSchema>): Scenario {
         mapOptions(schema.options)
     );
 }
+
+
 // #endregion
+// ───────────────────────────────────────────────────────────────────────
+// #region Game Functions 
 
-
-// #region :: Game Functions 
-// ────────────────────────────────────────────────────────────────────
-//                          Game Functions
-// ────────────────────────────────────────────────────────────────────
 
 function gameInitialize(profession_id:string) {
     player = new Player(getProfessionById(profession_id), TOTAL_DISTANCE);
@@ -413,4 +410,6 @@ function gameEffectMessage (effects: Stats) {
     else 
         { return `Effect: ${output[0]}.`}
 }
+
+
 // #endregion

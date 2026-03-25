@@ -187,7 +187,6 @@ export class EventBus {
             this.events.set(event, new Set())
         }
         this.events.get(event)!.add(handler)
-
         return () => {this.unsubscribe(event, handler)}
     }
 

@@ -11,9 +11,8 @@ import { Screen } from ".";
  * Start Screen for initializing the game.
  */
 export class StartScreen extends Screen {
-    // ───────────────────────────────────────────────────────────────────────
     // #region Initialization
-    // ───────────────────────────────────────────────────────────────────────
+
 
     /** The title container. */
     protected title: HTMLElement = document.createElement("h1")
@@ -21,10 +20,11 @@ export class StartScreen extends Screen {
     /** The start button to begin the game. */
     protected start_button: HTMLButtonElement = document.createElement("button")
 
+
     // #endregion
     // ───────────────────────────────────────────────────────────────────────
     // #region Lifecycle
-    // ───────────────────────────────────────────────────────────────────────
+
     
     protected subscribe(): void {
         // Handlers
@@ -53,6 +53,7 @@ export class StartScreen extends Screen {
             this.start_button,
         )
     }
+
 
     // #endregion
 }

@@ -8,9 +8,8 @@ import { Screen } from "@/ui/screens"
 
 /** Manages a stack of UI Screens. */
 export class ScreenManager {
-    // ───────────────────────────────────────────────────────────────────────
     // #region Initialization
-    // ───────────────────────────────────────────────────────────────────────
+
 
     /** Root container for all the screens. */
     private root: HTMLElement
@@ -23,16 +22,18 @@ export class ScreenManager {
         this.root = root
     }
 
+
     // #endregion
     // ───────────────────────────────────────────────────────────────────────
     // #region Public API
-    // ───────────────────────────────────────────────────────────────────────
 
+    
     /** 
      * Adds a new screen to the top of the stack. 
      * @param screen - The new screen.
      */
     public push (screen: Screen): void {
+        console.log(`Screen: new ${screen.constructor.name}`)
         this.stack.push(screen)
         screen.enter(this.root)
     }

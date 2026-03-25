@@ -21,9 +21,8 @@ import type { EventBus } from "@/events"
  * should be registered via `track()` to ensure automatic cleanup.
  */
 export abstract class Screen {
-    // ───────────────────────────────────────────────────────────────────────
     // #region Initialization
-    // ───────────────────────────────────────────────────────────────────────
+
 
     /** Root DOM element for this screen. */
     protected root: HTMLElement
@@ -65,7 +64,7 @@ export abstract class Screen {
     // #endregion
     // ───────────────────────────────────────────────────────────────────────
     // #region Public API
-    // ───────────────────────────────────────────────────────────────────────
+
 
     /**
      * Mounts the screen into the provided container element.
@@ -79,7 +78,6 @@ export abstract class Screen {
      * @param container - The parent element where this screen will be appended
      */
     enter (container: HTMLElement): void {
-        console.log("Entering Screen...")
         if (this.is_mounted) return
         this.is_mounted = true
 
@@ -122,7 +120,7 @@ export abstract class Screen {
     // #endregion
     // ───────────────────────────────────────────────────────────────────────
     // #region Helpers
-    // ───────────────────────────────────────────────────────────────────────
+
 
     /**
      * Registers a cleanup callback.
@@ -253,7 +251,7 @@ export abstract class Screen {
     // #endregion
     // ───────────────────────────────────────────────────────────────────────
     // #region Lifecycle
-    // ───────────────────────────────────────────────────────────────────────
+
 
     /**
      * Defines all side-effect subscriptions for the screen.
@@ -323,6 +321,6 @@ export abstract class Screen {
      */
     protected onExit? (): void
 
+
     // #endregion
-    // ───────────────────────────────────────────────────────────────────────
 }

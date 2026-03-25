@@ -170,9 +170,8 @@ export class ProfessionCardComponent extends Component {
 
 /** Profession Selection Menu Screen. */
 export class ClassSelectionScreen extends Screen {
-    // ───────────────────────────────────────────────────────────────────────
     // #region Initialization
-    // ───────────────────────────────────────────────────────────────────────
+
     
     protected info = document.createElement("div")
     protected options = document.createElement("div")
@@ -180,10 +179,10 @@ export class ClassSelectionScreen extends Screen {
     protected description = document.createElement("p")
     protected hint = document.createElement("p")
 
+
     // #endregion
     // ───────────────────────────────────────────────────────────────────────
     // #region Helpers
-    // ───────────────────────────────────────────────────────────────────────
 
     private displayOptions = (class_options: Profession[]) => {
         // Clear any previous options.
@@ -226,10 +225,10 @@ export class ClassSelectionScreen extends Screen {
         )
     }
 
+
     // #endregion
     // ───────────────────────────────────────────────────────────────────────
     // #region Lifecycle
-    // ───────────────────────────────────────────────────────────────────────
     
     protected subscribe(): void {
         // 
@@ -257,12 +256,12 @@ export class ClassSelectionScreen extends Screen {
 
         // DOM
         this.options.replaceChildren()
-        professions.forEach(
-            (profession) => {
-                this.options.appendChild(
-                    new ProfessionCardComponent(profession).element)
-            }
-        )
+        // professions.forEach(
+        //     (profession) => {
+        //         this.options.appendChild(
+        //             new ProfessionCardComponent(profession).element)
+        //     }
+        // )
 
         this.info.replaceChildren(
             this.title,
