@@ -10,7 +10,7 @@ import { OptionsView } from "./scripts/ui/views/options-view.js";
 
 // New Imports
 import { EventBus } from "@/events"
-import { StartScreen } from "@/ui/screens";
+import { GameEngine } from "./core/game/engine.js";
 import { ScreenController, ScreenManager } from "@/ui/controllers";
 import "@/styles/screens/start.scss"
 
@@ -33,7 +33,7 @@ const bus = new EventBus()
 const man = new ScreenManager(dev_window)
 const ctlr = new ScreenController(bus, man)
 ctlr.subscribe()
-man.push(new StartScreen(bus))
+const game = new GameEngine(bus)
 
 
 // #region Old User Interface
