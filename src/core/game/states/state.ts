@@ -11,7 +11,6 @@ export abstract class GameState {
     enter? (context: GameContext): void
     update? (context: GameContext) :void
     exit? (context: GameContext) {
-        console.log(context)
         this.subscriptions.forEach((unsubscribe) => {unsubscribe()})
     }
 }
