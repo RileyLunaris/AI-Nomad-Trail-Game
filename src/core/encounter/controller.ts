@@ -18,13 +18,13 @@ export class EncounterController {
     ) {
         this.bus = event_bus
         this.context = new EncounterContext(this)
-        this.state = new Fetching();
-        this.state.enter?.(this.context)
+        this.state = new Fetching(this.context);
+        this.state.enter?.()
     }
 
     changeState (new_state: EncounterState) {
-        this.state.exit?.(this.context)
+        this.state.exit?.()
         this.state = new_state
-        this.state.enter?.(this.context)
+        this.state.enter?.()
     }
 }

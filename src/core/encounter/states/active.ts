@@ -3,7 +3,6 @@
 //                    Encounter State :: Active
 // ═══════════════════════════════════════════════════════════════════════════
 
-import type { EncounterContext } from "../context";
 import { EncounterState } from "./state";
 
 
