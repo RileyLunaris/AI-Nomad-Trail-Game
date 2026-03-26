@@ -1,13 +1,14 @@
 :root {
-    --background: #f7f7f9;
+    --background: #1E1E1E; /* #f7f7f9; */
     --header: #4338ca;
-    --text: black;
+    --text: white; /* black; */
     --divider: #e5e7eb;
 }
 
 body {
     font-family: 'Inter', sans-serif;
     background-color: var(--background);
+    color: var(--text);
 }
 
 #app {
@@ -20,7 +21,9 @@ body {
         /* padding: 2rem; */
     }
 }
-
+#game {
+    display: none;
+}
 
 /* Title Bar */
 .title-bar {
