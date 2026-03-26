@@ -98,7 +98,7 @@ export class ClassSelectionScreen extends Screen {
 
     protected subscribe(): void {
         this.track(
-            this.bus.subscribe(GameEvents.choose_class, this.displayOptions)
+            this.bus.subscribe(GameEvents.unemployed, this.displayOptions)
         )
         this.delegate(
             this.options_panel, 

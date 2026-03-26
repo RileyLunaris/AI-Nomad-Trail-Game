@@ -46,7 +46,7 @@ export class ScreenController {
 
     public subscribe () {
         this.bus.subscribe(GameEvents.started, this.start_screen)
-        this.bus.subscribe(GameEvents.choose_class, this.class_selection_screen)
+        this.bus.subscribe(GameEvents.unemployed, this.class_selection_screen)
     }
 
     public unsubscribe () {
