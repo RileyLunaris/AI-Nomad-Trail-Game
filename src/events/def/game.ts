@@ -14,9 +14,12 @@ export const GameEvents = {
     /** The game is initialized. */
     started: "game.started",
 
-    /**  */
-    choose_class: "game.choose_class",
+    /** The player needs a job. */
+    unemployed: "game.player_unemployed",
     
+    /** The player was Hired. */
+    employed: "game.player_employed",
+
     /** The game is a foot. 🦶 */
     playing: "game.playing",
 
