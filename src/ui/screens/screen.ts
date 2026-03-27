@@ -78,12 +78,13 @@ export abstract class Screen {
      * @param container - The parent element where this screen will be appended
      */
     enter (container: HTMLElement): void {
+        console.log(`Entered: ${this.constructor.name}`)
         if (this.is_mounted) return
         this.is_mounted = true
 
         this.build()
         this.subscribe()
-
+        this.element.classList.remove("hidden")
         container.appendChild(this.root)
 
         this.onEnter?.()
@@ -99,13 +100,14 @@ export abstract class Screen {
      * 4. remove root element
      */
     exit (): void {
+        console.log(`Exited: ${this.constructor.name}`)
         if (!this.is_mounted) return            // check 
         this.is_mounted = false
 
         this.cleanup()
         this.onExit?.()
         this.destroy?.()
-
+        this.element.classList.add("hidden")
         this.root.remove()
     }
 
