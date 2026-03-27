@@ -4,15 +4,20 @@
 // ═══════════════════════════════════════════════════════════════════════════
 
 import { GameEvents, UserEvents } from "@/events"
-import { CharacterSelection, GameState } from "."
+import { ClassMenu, GameState } from "."
 
 
 export class StartMenu extends GameState {
+    private seek_employment = () => {
+        this.context.changeState(new ClassMenu(this.context))
+    }
+
+
     listen(): void {
         this.subscriptions.push(
             this.context.bus.subscribe(
                 UserEvents.started_game,
-                () => {this.context.changeState(new CharacterSelection(this.context))}
+                this.seek_employment
             )
         )
     }
