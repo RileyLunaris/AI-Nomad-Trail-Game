@@ -3,9 +3,10 @@
 //                              Class Selection Screen
 // ═══════════════════════════════════════════════════════════════════════════
 
-import { GameEvents, UserEvents } from "@/events"
+import { PlayerEvents, UserEvents } from "@/events"
 import { Screen } from "."
 import type { Profession } from "@/scripts/game/types"
+import "@/styles/screens/class-selection.scss"
 
 
 /** Profession Selection Menu Screen. */
@@ -21,14 +22,18 @@ export class ClassSelectionScreen extends Screen {
     protected options_panel = document.createElement("div")
     protected options?: Profession[]
 
+    protected go_back = document.createElement("button")
 
     // #endregion
     // ───────────────────────────────────────────────────────────────────────
     // #region Helpers
 
 
-    private displayOptions = (class_options: Profession[]) => {
-        // Clear any previous options.
+    private displayOptions = (
+        class_options: Profession[], 
+        rejected?: Profession[]
+    ) => {
+        // Clear any previous options.z3
         this.options_panel.innerHTML = ""
 
         class_options.forEach(
@@ -42,14 +47,14 @@ export class ClassSelectionScreen extends Screen {
                 const button = document.createElement("button")
 
                 // Class Assignments
-                card.classList.add("class-card")
-                image.classList.add(class_info.id)
-                button.classList.add(class_info.id)
+                card.classList.add("class-card", class_info.id)
+                info.classList.add("card-info")
+                button.classList.add(class_info.id, "hidden")
 
                 // Values
                 name.textContent = class_info.name
                 description.textContent = class_info.description
-                button.textContent = `Apply for: ${class_info.name}`
+                button.textContent = "Apply"
                 
                 // DOM
                 info.replaceChildren(
@@ -85,9 +90,18 @@ export class ClassSelectionScreen extends Screen {
         )
     }
 
-    private selectClass = (button: Element) => {
-        const class_id = button.classList[0]
-        this.bus.broadcast(UserEvents.chose_class, class_id)
+    private open_job_listing = (card: Element) => {
+        this.options_panel.querySelectorAll("button")?.forEach(
+            (button) => {button.classList.add("hidden")}
+        )
+        card.querySelector("button")?.classList.remove("hidden")
+    }
+    private select_class = (button: Element) => {
+        this.bus.broadcast(UserEvents.chose_class, button.classList[0])
+    }
+
+    private return_to_home_screen = () => {
+        this.bus.broadcast(UserEvents.went_back)
     }
 
 
@@ -98,13 +112,24 @@ export class ClassSelectionScreen extends Screen {
 
     protected subscribe(): void {
         this.track(
-            this.bus.subscribe(GameEvents.unemployed, this.displayOptions)
+            this.bus.subscribe(PlayerEvents.unemployed, this.displayOptions)
         )
         this.delegate(
             this.options_panel, 
             "button",
             "click",
-            this.selectClass
+            this.select_class
+        )
+        this.delegate(
+            this.options_panel,
+            ".class-card",
+            "click",
+            this.open_job_listing
+        )
+        this.listen(
+            this.go_back,
+            "click",
+            this.return_to_home_screen
         )
     }
 
@@ -114,7 +139,10 @@ export class ClassSelectionScreen extends Screen {
         this.root.replaceChildren(
             this.info_panel,
             this.options_panel,
+            this.go_back,
         )
+
+        this.go_back.textContent = "<- Back"
     }
     
     
