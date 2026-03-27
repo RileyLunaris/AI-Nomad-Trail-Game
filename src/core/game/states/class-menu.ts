@@ -3,26 +3,46 @@
 //                          Game State : Class Menu
 // ═══════════════════════════════════════════════════════════════════════════
 
-import { GameEvents, UserEvents } from "@/events"
+import { PlayerEvents, UserEvents } from "@/events"
 import { GameState } from "./state"
-import { ListRandomProfessions } from "@/scripts/game/content/professions"
-import { Hired } from "./hired"
+import { JobOffer } from "./job-offer"
+import { StartMenu } from "./start-menu"
+import { getProfessionById } from "@/scripts/game/content/professions"
 
 
-export class CharacterSelection extends GameState {
+export class ClassMenu extends GameState {
+    private submit_application = (profession_id: string) => {
+        const profession = getProfessionById(profession_id)
+        this.context.changeState(
+            new JobOffer(this.context, profession)
+        )
+    }
+    private go_back = () => {
+        this.context.changeState(
+            new StartMenu(this.context)
+        )
+    }
+
     listen(): void {
         this.subscriptions.push(
             this.context.bus.subscribe(
                 UserEvents.chose_class,
-                (profession_id) => {this.context.changeState(new Hired(this.context, profession_id))}
+                this.submit_application,
+            )
+        )
+
+        this.subscriptions.push(
+            this.context.bus.subscribe(
+                UserEvents.went_back,
+                this.go_back,
             )
         )
     }
     
     post(): void {
         this.context.bus.broadcast(
-            GameEvents.unemployed,
-            ListRandomProfessions()
+            PlayerEvents.unemployed,
+            this.context.jobs,
         )
     }
 }
