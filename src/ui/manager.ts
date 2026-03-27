@@ -33,15 +33,16 @@ export class ScreenManager {
      * @param screen - The new screen.
      */
     public push (screen: Screen): void {
-        console.log(`Screen: new ${screen.constructor.name}`)
+        this.current_screen?.exit()
         this.stack.push(screen)
         screen.enter(this.root)
     }
 
     /** Removes the top screen from the stack. */
     public pop (): void {
-        const screen = this.stack.pop()
-        screen?.exit()
+        this.current_screen?.exit()
+        this.stack.pop()
+        this.current_screen?.enter(this.root)
     }
 
     /**
@@ -55,7 +56,7 @@ export class ScreenManager {
 
     /** Removes all screens except for the first. */
     public clear (): void {
-        while (this.stack.length > 0) {
+        while (this.stack.length > 1) {
             this.pop()
         }
     }
@@ -64,9 +65,9 @@ export class ScreenManager {
      * Returns the current active screen.
      * @returns - the active screen.
      */
-    public current (): Screen | undefined {
-        return this.stack[this.stack.length - 1];
+    get current_screen (): Screen | undefined {
+        return this.stack.at(-1)
     }
-    
+
     //#endregion
 }
