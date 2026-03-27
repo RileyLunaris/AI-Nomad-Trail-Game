@@ -4,85 +4,89 @@
 // ═══════════════════════════════════════════════════════════════════════════
 
 
-.start-screen {
-    // Area
-    width: 100vw;
-    height: 100vh;
+// .start-screen {
+//     // Area
+//     width: 100vw;
+//     height: 100vh;
 
-    // Background
-    background-image: url("@/assets/title-screen.png");
-    background-color: black;
-    background-size: cover;
-    background-position: center;
-    background-repeat: no-repeat;
+//     // Background
+//     background-image: url("@/assets/title-screen.png");
+//     background-color: black;
+//     background-size: cover;
+//     background-position: center;
+//     background-repeat: no-repeat;
 
-    // Display Rules
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    align-items: center;
-    text-align: center;
-
-
-    .title {
-        // Font Style
-        font-family: 'Segoe UI'; 
-        font-size: xxx-large;
-        font-weight: 800;
-
-        // Colors
-        background: linear-gradient(90deg, #ff00ff, #00f0ff, #39ff14);
-        background-size: 600%, 600%;
-        background-clip: border-box;
-
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: black;
-        -webkit-text-stroke: 1.5px rgba(255,255,255,0.5);
-
-        // animation
-        animation: gradientShift 6s ease infinite;
-
-        // text glow
-        text-shadow:
-            0 0 5px rgba(0, 240, 255, 0.7),
-            0 0 10px rgba(255, 0, 255, 0.6),
-            0 0 20px rgba(57, 255, 20, 0.5),
-            0 0 30px white,
-            0 0 40px white;
-
-        margin: 0.5rem;
-    }
+//     // Display Rules
+//     display: flex;
+//     flex-direction: column;
+//     justify-content: space-between;
+//     align-items: center;
+//     text-align: center;
 
 
-    button{
-        width: 15rem;
-        height: 2rem;
+//     .title {
+//         // Font Style
+//         font-family: 'Segoe UI'; 
+//         font-size: xxx-large;
+//         font-weight: 800;
+
+//         // Colors
+//         background: linear-gradient(90deg, #ff00ff, #00f0ff, #39ff14);
+//         background-size: 600%, 600%;
+//         background-clip: border-box;
+
+//         -webkit-background-clip: text;
+//         -webkit-text-fill-color: black;
+//         -webkit-text-stroke: 1.5px rgba(255,255,255,0.5);
+
+//         // animation
+//         animation: gradientShift 6s ease infinite;
+
+//         // text glow
+//         text-shadow:
+//             0 0 5px rgba(0, 240, 255, 0.7),
+//             0 0 10px rgba(255, 0, 255, 0.6),
+//             0 0 20px rgba(57, 255, 20, 0.5),
+//             0 0 30px white,
+//             0 0 40px white;
+
+//         margin: 0.5rem;
+//     }
+
+
+//     button{
+//         width: 15rem;
+//         height: 2rem;
         
-        font-family: Verdana;
-        color: white;
-        font-weight: 600;
+//         font-family: Verdana;
+//         color: white;
+//         font-weight: 600;
 
-        background: linear-gradient(0deg, #555555, black, black);
+//         background: linear-gradient(0deg, #555555, black, black);
         
-        border-color: rgba(255, 196, 0);
-        border-radius: 0.6rem;
-        border-width: 0.13rem;
+//         border-color: rgba(255, 196, 0);
+//         border-radius: 0.6rem;
+//         border-width: 0.13rem;
 
-        margin-bottom: 1rem;;
+//         margin-bottom: 1rem;;
 
-        &:hover {
-            border-color: #00f0ff;
-            color: #00f0ff;
-            text-shadow: 
-                0 0 5px rgba(0, 240, 255, 0.7),
-                0 0 10px rgba(255, 0, 255, 0.6),
-                0 0 15px white;
-        }
-    }
-}
+//         &:hover {
+//             border-color: #00f0ff;
+//             color: #00f0ff;
+//             text-shadow: 
+//                 0 0 5px rgba(0, 240, 255, 0.7),
+//                 0 0 10px rgba(255, 0, 255, 0.6),
+//                 0 0 15px white;
+//         }
+//     }
+// }
 
-@keyframes gradientShift {
-    0% { background-position: 0% 50%; }
-    50% { background-position: 100% 50%; }
-    100% { background-position: 0% 50%; }
+// @keyframes gradientShift {
+//     0% { background-position: 0% 50%; }
+//     50% { background-position: 100% 50%; }
+//     100% { background-position: 0% 50%; }
+// }
+
+.hidden {
+    display: none;
 }
