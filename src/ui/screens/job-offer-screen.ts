@@ -3,10 +3,11 @@
 //                                Job Offer Screen
 // ═══════════════════════════════════════════════════════════════════════════
 
-import { EventBus, PlayerEvents, UserEvents } from "@/events"
+import { EventBus, UserEvents } from "@/events"
 import { Screen } from "."
 import "@/styles/screens/job-offer.scss"
 import type { Profession } from "@/scripts/game/types"
+import { shuffleArray } from "@/scripts/utils"
 
 
 export class JobOfferScreen extends Screen {
@@ -61,9 +62,39 @@ export class JobOfferScreen extends Screen {
     }
 
     protected build(): void {
+        const random_company = () => {
+            const companies = [
+                "TehSlur",
+                "Pineapple",
+                "MacroSlop",
+                "Chad Gypity",
+                "ToyYoda",
+                "StarBox",
+                "ClockedIn",
+                "Spotificate",
+                "NeckFlicks",
+            ]
+            return shuffleArray(companies)[0]!
+        }
+
         this.root.classList.add("job-offer-screen")
-        this.title.textContent = "!! Congratulations !!"
-        this.description.textContent = `You've been selected to work as a remote ${this.profession.name}`
+        this.title.textContent = `
+New Email:
+Subject :: 🚨👍🎉 !! Congrat$ G !! 🎉👍🚨
+`
+        this.description.textContent = `
+Dear [appicant.name],
+
+
+After carelessly reviewing your application. We here at ${random_company()} are less than thrilled to offer you a role as our new, remote only,  ${this.profession.name}!
+
+We can't say that you are qualified, nor did we check your references. We are so eager to never meet you in person, ever!
+
+
+Worst Regards, ❤️
+[resourced_human.name]
+
+`
         this.accept.textContent = "Accept"
         this.reject.textContent = "Reject"
         this.root.replaceChildren(
