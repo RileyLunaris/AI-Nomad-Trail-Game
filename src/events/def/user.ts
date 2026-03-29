@@ -15,6 +15,9 @@ export const UserEvents = {
     /** User wants to start the game. */
     started_game: "user.started_game",
 
+    /** User re-started the game. */
+    restarted_game: "user.restarted_game",
+
     /** User chose a class. */
     chose_class: "user.chose_class",
 
