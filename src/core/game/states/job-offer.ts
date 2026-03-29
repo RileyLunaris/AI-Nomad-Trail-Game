@@ -8,7 +8,8 @@ import { GameState } from "./state"
 import type { Profession } from "@/scripts/game/types"
 import type { GameContext } from "../context"
 import { ClassMenu } from "./class-menu"
-import { GameOver } from "./game-over"
+import { GameOver, GameOverReason } from "./game-over"
+import { Playing } from "./playing"
 
 
 export class JobOffer extends GameState {
@@ -26,14 +27,14 @@ export class JobOffer extends GameState {
     private reject_offer = () => {
         this.context.jobs = this.context.jobs.filter(job => job != this.profession)
         if (this.context.jobs.length === 0) {
-            this.context.changeState(new GameOver(this.context))
+            this.context.changeState(new GameOver(this.context, GameOverReason.rejected_too_many_offers))
         } else {
             this.context.changeState(new ClassMenu(this.context))
         }
     }
 
     private accept_offer = () => {
-        this.context.bus.broadcast(PlayerEvents.accepted_offer, this.profession)
+        this.context.changeState(new Playing(this.context, this.profession))
     }
 
     listen(): void {
@@ -47,7 +48,6 @@ export class JobOffer extends GameState {
                 this.accept_offer
             ),
         )
-
     }
 
     post () {

@@ -6,8 +6,8 @@
 import { PlayerEvents, UserEvents } from "@/events"
 import { GameState } from "./state"
 import { JobOffer } from "./job-offer"
-import { StartMenu } from "./start-menu"
 import { getProfessionById } from "@/scripts/game/content/professions"
+import { GameOver, GameOverReason } from "./game-over"
 
 
 export class ClassMenu extends GameState {
@@ -19,7 +19,7 @@ export class ClassMenu extends GameState {
     }
     private go_back = () => {
         this.context.changeState(
-            new StartMenu(this.context)
+            new GameOver(this.context, GameOverReason.didnt_look_for_jobs)
         )
     }
 
