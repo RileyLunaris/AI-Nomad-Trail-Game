@@ -4,10 +4,10 @@
 // ═══════════════════════════════════════════════════════════════════════════
 
 import { GameEvents, PlayerEvents, type EventBus } from "@/events";
-import { ClassSelectionScreen, StartScreen } from "./screens";
-import type { ScreenManager } from ".";
-import { JobOfferScreen } from "./screens/job-offer-screen";
+import { ClassSelectionScreen, GameOverScreen, JobOfferScreen, StartScreen } from "./screens";
+
 import type { Profession } from "@/scripts/game/types";
+import type { ScreenManager } from "./manager";
 
 
 export class ScreenController {
@@ -51,7 +51,11 @@ export class ScreenController {
         this.manager.pop() 
     }
 
-    
+    private game_over_screen = (reason: string) => {
+        this.manager.push(new GameOverScreen(this.bus, reason))
+    }
+
+
     // #endregion
     // ───────────────────────────────────────────────────────────────────────
     // #region Public API
@@ -62,7 +66,7 @@ export class ScreenController {
         this.bus.subscribe(PlayerEvents.unemployed, this.class_selection_screen)
         this.bus.subscribe(PlayerEvents.offered_job, this.job_offer_screen)
         this.bus.subscribe(PlayerEvents.rejected_offer, this.go_to_last_page)
-        // this.bus.subscribe(PlayerEvents.was_hired, this.journey_screen)
+        this.bus.subscribe(GameEvents.game_over, this.game_over_screen)
     }
 
     public unsubscribe () {
