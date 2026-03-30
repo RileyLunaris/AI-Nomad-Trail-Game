@@ -1,15 +1,16 @@
 
 // ═══════════════════════════════════════════════════════════════════════════
-//                          Game State : Gameplay
+//                          Game State : Playing
 // ═══════════════════════════════════════════════════════════════════════════
 
 import type { Profession } from "@/scripts/game/types"
 import type { GameContext } from "../context"
 import { GameState } from "./state"
-import { GameEvents } from "@/events"
+import { GameEvents, PlayerEvents, ScenarioEvents } from "@/events"
 
 
 export class Playing extends GameState {
+
     private profession: Profession
 
     constructor (
@@ -20,13 +21,11 @@ export class Playing extends GameState {
         this.profession = profession
     }
 
-    listen(): void {
-        
-    }
-    post(): void {
-        this.context.bus.broadcast(GameEvents.playing)
-    }
-    update(): void {
-        
+    private update_player = () => {}
+    private update_encounter = () => {}
+    onEnter(): void {
+        this.post(GameEvents.playing)
+        this.listen(PlayerEvents.update, this.update_player)
+        this.listen(ScenarioEvents.update, this.update_encounter)
     }
 }

@@ -1,8 +1,9 @@
 
 // ═══════════════════════════════════════════════════════════════════════════
-//                              Game States
+//                          Game States
 // ═══════════════════════════════════════════════════════════════════════════
 
+import type { EventHandler, EventName } from "@/events";
 import type { GameContext } from "../context";
 
 
@@ -21,11 +22,39 @@ export abstract class GameState {
 
     // #endregion
     // ───────────────────────────────────────────────────────────────────────
-    // #region helpers
+    // #region Helpers
 
     
-    listen? (): void
-    post? (): void
+    protected listen (
+        event: EventName, 
+        handler: EventHandler
+    ) {
+        this.subscriptions.push(
+            this.context.bus.subscribe(event, handler)
+        )
+    }
+    
+    protected post <T> (
+        event: EventName, 
+        data?: T
+    ) {
+        this.context.bus.broadcast(event, data)
+    }
+
+    protected changeState (
+        state: GameState
+    ) {
+        this.context.changeState(state)
+    }
+
+
+    // #endregion
+    // ───────────────────────────────────────────────────────────────────────
+    // #region Helpers
+
+    
+    onEnter? (): void
+    onExit? (): void
     update? () :void
 
 
@@ -34,11 +63,11 @@ export abstract class GameState {
     // #region Public API
 
 
-    enter () {
-        this.listen?.()
-        this.post?.()
+    public enter () {
+        this.onEnter?.()
     }
-    exit () {
+    public exit () {
+        this.onExit?.()
         this.subscriptions.forEach((unsubscribe) => {unsubscribe()})
     }
     
