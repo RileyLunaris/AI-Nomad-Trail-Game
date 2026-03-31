@@ -11,11 +11,14 @@ import { ClassMenu } from "./class-menu"
 import { GameOver } from "./game-over"
 import { Playing } from "./playing"
 import { GameOverReason } from "../endings"
+import { fetchJobOffer } from "@/core/job-offer/offer"
+import type { Offer } from "@/core/job-offer"
 
 
 export class JobOffer extends GameState {
 
     private profession: Profession
+    private offer: Offer
 
     constructor (
         context: GameContext,
@@ -23,6 +26,7 @@ export class JobOffer extends GameState {
     ) {
         super(context)
         this.profession = profession
+        this.offer = fetchJobOffer(profession.name)
     }
 
     private end_game () {
@@ -46,7 +50,7 @@ export class JobOffer extends GameState {
     }
 
     onEnter(): void {
-        this.post(PlayerEvents.offered_job, this.profession)
+        this.post(PlayerEvents.offered_job, this.offer)
         this.listen(UserEvents.rejected_offer, this.reject_offer)
         this.listen(UserEvents.accepted_offer, this.accept_offer)
     }

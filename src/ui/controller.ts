@@ -8,6 +8,7 @@ import { ClassSelectionScreen, GameOverScreen, JobOfferScreen, StartScreen } fro
 
 import type { Profession } from "@/scripts/game/types";
 import type { ScreenManager } from "./manager";
+import type { Email } from "@/core/job-offer/types";
 
 
 export class ScreenController {
@@ -43,8 +44,8 @@ export class ScreenController {
         this.manager.push(new ClassSelectionScreen(this.bus))
     }
 
-    private job_offer_screen = (profession: Profession) => {
-        this.manager.push(new JobOfferScreen(this.bus, profession))
+    private job_offer_screen = (email: Email) => {
+        this.manager.push(new JobOfferScreen(this.bus, email))
     }
 
     private go_to_last_page = () => {

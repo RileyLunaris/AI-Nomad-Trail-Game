@@ -3,30 +3,29 @@
 //                            Screen : Job Offer
 // ═══════════════════════════════════════════════════════════════════════════
 
+import type { Offer } from "@/core/job-offer"
 import { EventBus, UserEvents } from "@/events"
 import { Screen } from "."
 import "@/styles/screens/job-offer.scss"
-import type { Profession } from "@/scripts/game/types"
-import { shuffleArray } from "@/scripts/utils"
 
 
 export class JobOfferScreen extends Screen {
     // #region Initialization
+    protected offer: Offer
 
-
-    protected profession: Profession
-
-    protected title = document.createElement("h3")
-    protected description = document.createElement("p")
+    protected email = document.createElement("div")
+    protected subject = document.createElement("h3")
+    protected body = document.createElement("p")
+    protected signature = document.createElement("p")
     protected accept = document.createElement("button")
     protected reject = document.createElement("button")
 
     constructor (
         event_bus: EventBus, 
-        profession: Profession,
+        offer: Offer,
     ) {
         super(event_bus)
-        this.profession = profession
+        this.offer = offer
     }
 
 
@@ -36,10 +35,10 @@ export class JobOfferScreen extends Screen {
 
 
     protected start_game () {
-        this.bus.broadcast(UserEvents.accepted_offer, this.profession)
+        this.bus.broadcast(UserEvents.accepted_offer, this.offer.position)
     }
     private keep_applying () {
-        this.bus.broadcast(UserEvents.rejected_offer, this.profession)
+        this.bus.broadcast(UserEvents.rejected_offer, this.offer.position)
     }
 
 
@@ -61,45 +60,23 @@ export class JobOfferScreen extends Screen {
         )
     }
 
-    protected build(): void {
-        const random_company = () => {
-            const companies = [
-                "TehSlur",
-                "Pineapple",
-                "MacroSlop",
-                "Chad Gypity",
-                "ToyYoda",
-                "StarBox",
-                "ClockedIn",
-                "Spotificate",
-                "NeckFlicks",
-            ]
-            return shuffleArray(companies)[0]!
-        }
-
+    protected build(): void {        
         this.root.classList.add("job-offer-screen")
-        this.title.textContent = `
-New Email:
-Subject :: 🚨👍🎉 !! Congrat$ G !! 🎉👍🚨
-`
-        this.description.textContent = `
-Dear [appicant.name],
+        
+        this.subject.textContent = this.offer.subject
+        this.body.textContent = this.offer.body
+        this.signature.textContent = this.offer.signature
 
-
-After carelessly reviewing your application. We here at ${random_company()} are less than thrilled to offer you a role as our new, remote only,  ${this.profession.name}!
-
-We can't say that you are qualified, nor did we check your references. We are so eager to never meet you in person, ever!
-
-
-Worst Regards, ❤️
-[resourced_human.name]
-
-`
         this.accept.textContent = "Accept"
         this.reject.textContent = "Reject"
+
+        this.email.replaceChildren(
+            this.subject,
+            this.body,
+            this.signature,
+        )
         this.root.replaceChildren(
-            this.title,
-            this.description,
+            this.email,
             this.accept,
             this.reject,
         )
