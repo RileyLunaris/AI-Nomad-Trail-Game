@@ -1,6 +1,6 @@
 
 // ═══════════════════════════════════════════════════════════════════════════
-//                              Class Selection Screen
+//                          Screen : Class Selection
 // ═══════════════════════════════════════════════════════════════════════════
 
 import { PlayerEvents, UserEvents } from "@/events"
