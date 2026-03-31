@@ -25,12 +25,19 @@ export class JobOffer extends GameState {
         this.profession = profession
     }
 
+    private end_game () {
+        this.changeState(new GameOver(this.context, GameOverReason.rejected_too_many_offers))
+    }
+    private continue_game () {
+        this.context.jobs = this.context.jobs.filter( job => job != this.profession )
+        this.changeState(new ClassMenu(this.context))
+    }
+
     private reject_offer = () => {
-        this.context.jobs = this.context.jobs.filter(job => job != this.profession)
-        if (this.context.jobs.length === 0) {
-            this.changeState(new GameOver(this.context, GameOverReason.rejected_too_many_offers))
-        } else {
-            this.changeState(new ClassMenu(this.context))
+        if (this.context.jobs.length <= 1) {
+            this.end_game()
+        } else { 
+            this.continue_game()
         }
     }
 
